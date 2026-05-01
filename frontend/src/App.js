@@ -1,52 +1,76 @@
-import { useEffect } from "react";
+import React, { useState } from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Splash from "./components/Splash";
+import Auth from "./components/Auth";
+import Layout from "./components/Layout";
+import MapView from "./components/MapView";
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+import CustomerHome from "./pages/CustomerHome";
+import Booking from "./pages/Booking";
+import BarberDashboard from "./pages/BarberDashboard";
+import Wallet from "./pages/Wallet";
+import Chat from "./pages/Chat";
+import Settings from "./pages/Settings";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminUsers from "./pages/AdminUsers";
+import AdminBookings from "./pages/AdminBookings";
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+const RoleHome = () => {
+  const { user } = useAuth();
+  if (user?.role === "barber") return <BarberDashboard />;
+  if (user?.role === "admin") return <AdminDashboard />;
+  return <CustomerHome />;
+};
+
+const Protected = () => {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  if (!user) return <Navigate to="/auth" replace />;
+  return (
+    <Layout>
+      <Routes>
+        <Route index element={<RoleHome />} />
+        <Route path="map" element={<MapView />} />
+        <Route path="book" element={<Booking />} />
+        <Route path="wallet" element={<Wallet />} />
+        <Route path="chat" element={<Chat />} />
+        <Route path="settings" element={<Settings />} />
+        <Route path="users" element={<AdminUsers />} />
+        <Route path="bookings" element={<AdminBookings />} />
+      </Routes>
+    </Layout>
+  );
+};
+
+const Root = () => {
+  const [showSplash, setShowSplash] = useState(true);
+  const { user, loading } = useAuth();
+
+  if (showSplash) return <Splash onDone={() => setShowSplash(false)} />;
+  if (loading) return null;
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
+    <Routes>
+      <Route path="/auth" element={user ? <Navigate to="/app" replace /> : <Auth />} />
+      <Route path="/app/*" element={<Protected />} />
+      <Route path="*" element={<Navigate to={user ? "/app" : "/auth"} replace />} />
+    </Routes>
   );
 };
 
 function App() {
   return (
     <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <Root />
+          <Toaster position="top-center" richColors theme="dark" toastOptions={{ style: { fontFamily: "Cairo, sans-serif", direction: "rtl" } }} />
+        </BrowserRouter>
+      </AuthProvider>
     </div>
   );
 }
