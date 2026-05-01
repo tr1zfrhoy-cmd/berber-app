@@ -1,0 +1,88 @@
+{
+  "theme": "dark",
+  "archetype": "5 (Jewel & Luxury)",
+  "rtl_mandatory": true,
+  "app_name_ar": "حلاق دلفري",
+  "app_name_en": "Barber Delivery",
+  "typography": {
+    "font_family": "'Cairo', sans-serif",
+    "headings": "font-black tracking-tight",
+    "body": "font-medium leading-relaxed",
+    "import_url": "https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap"
+  },
+  "colors": {
+    "background": "#050505",
+    "surface": "#121212",
+    "surface_glass": "rgba(18, 18, 18, 0.7)",
+    "primary": "#D4AF37",
+    "primary_hover": "#F3E5AB",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#A1A1AA",
+    "accent_success": "#22C55E",
+    "accent_danger": "#EF4444",
+    "border": "rgba(255, 255, 255, 0.1)"
+  },
+  "layout": {
+    "spacing_scale": "generous",
+    "border_radius": "rounded-2xl",
+    "borders": "1px solid border",
+    "glass_blur": "backdrop-blur-xl"
+  },
+  "components_strategy": {
+    "cards": "Flat dark surfaces, 1px white/10 border, avoid heavy drop shadows. Use inner glow or border hover effects.",
+    "navigation": "Fixed bottom tab bar for mobile users (Customers/Barbers). Sidebar for Admin dashboard desktop.",
+    "buttons": "Primary buttons in Gold (#D4AF37) with dark text. High contrast hover states.",
+    "map": "Leaflet with a dark mode tile layer (e.g., CartoDB Dark Matter) if possible.",
+    "fab": "Floating Action Button for quick map access or booking. Glassmorphism styling."
+  },
+  "key_features_data": {
+    "currency": "IQD",
+    "services": [
+      { "name_ar": "حلاقة كاملة", "price": 10000, "icon": "Scissors" },
+      { "name_ar": "حلاقة أطفال", "price": 5000, "icon": "Baby" },
+      { "name_ar": "تحديد لحية / شعر", "price": 5000, "icon": "User" },
+      { "name_ar": "سشوار", "price": 5000, "icon": "Wind" }
+    ],
+    "platform_fee": 1000,
+    "support": {
+      "whatsapp": "https://wa.me/9647812059874",
+      "email": "mailto:tr1zfrhoy@gmail.com"
+    }
+  },
+  "media_urls": {
+    "splash_hero": {
+      "url": "https://images.unsplash.com/photo-1703792684940-a05aa0f1188f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwzfHxiYXJiZXIlMjBwb3J0cmFpdHxlbnwwfHx8fDE3Nzc1OTkwNzV8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Barber performing haircut (dark premium vibe), for splash or hero screens"
+    },
+    "barber_avatar_1": {
+      "url": "https://images.unsplash.com/photo-1619233543112-fe382ff3693d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwxfHxiYXJiZXIlMjBwb3J0cmFpdHxlbnwwfHx8fDE3Nzc1OTkwNzV8MA&ixlib=rb-4.1.0&q=85",
+      "description": "Avatar for barber 1"
+    },
+    "barber_avatar_2": {
+      "url": "https://images.unsplash.com/photo-1764179627974-25d96c2a1e97?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NzV8MHwxfHNlYXJjaHwyfHxiYXJiZXIlMjBzaG9wJTIwZGFyayUyMHByZW1pdW18ZW58MHx8fHwxNzc3NTk5MDc1fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Avatar for barber 2"
+    },
+    "barber_avatar_3": {
+      "url": "https://images.pexels.com/photos/30716347/pexels-photo-30716347.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Avatar for barber 3"
+    },
+    "service_icon_img": {
+      "url": "https://images.unsplash.com/photo-1696091997052-f52f85285d8d?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MTN8MHwxfHNlYXJjaHwxfHxoYWlyY3V0JTIwc2Npc3NvcnN8ZW58MHx8fHwxNzc3NTk5MDc1fDA&ixlib=rb-4.1.0&q=85",
+      "description": "Haircut scissors image for service decoration"
+    },
+    "shop_vibe": {
+      "url": "https://images.pexels.com/photos/2174113/pexels-photo-2174113.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+      "description": "Barber shop interior for map placeholder or background"
+    }
+  },
+  "instructions_to_main_agent": [
+    "Install required dependencies: 'leaflet', 'react-leaflet', 'lucide-react'.",
+    "Update index.html or global layout to include dir='rtl' for Arabic-first layout.",
+    "Add 'Cairo' font from Google Fonts and apply it in tailwind config.",
+    "Create 3 distinct user flows/views based on role: Customer, Barber, Admin.",
+    "Implement Customer Map view using Leaflet. Include a FAB for quick booking actions.",
+    "Implement Barber Wallet that calculates earnings minus 1000 IQD per job.",
+    "Ensure text contrast meets APCA/WCAG standards against dark backgrounds.",
+    "Include the required data-testid attributes for testing."
+  ]
+}
