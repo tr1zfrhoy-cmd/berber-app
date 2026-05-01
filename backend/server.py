@@ -297,7 +297,9 @@ async def update_booking_status(booking_id: str, payload: StatusUpdateIn, user: 
     update = {"status": payload.status}
 
     if payload.status == "accepted" and user["role"] == "barber":
-        # Deduct platform fee + claim booking for barber
+        # State guard: only accept pending unclaimed (or claimed by self) bookings
+        if booking["status"] != "pending" or (booking.get("barber_id") and booking["barber_id"] != user["id"]):
+            raise HTTPException(status_code=409, detail="الطلب غير متاح للقبول")
         update["barber_id"] = user["id"]
         update["barber_name"] = user["name"]
         update["platform_fee"] = PLATFORM_FEE

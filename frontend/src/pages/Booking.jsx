@@ -29,8 +29,14 @@ export default function Booking() {
 
   const selected = services.find((s) => s.key === serviceKey);
 
+  const [addressError, setAddressError] = useState(false);
   const submit = async () => {
-    if (!address.trim()) return toast.error("الرجاء إدخال العنوان");
+    if (!address.trim()) {
+      setAddressError(true);
+      toast.error("الرجاء إدخال العنوان قبل التأكيد");
+      return;
+    }
+    setAddressError(false);
     if (!coords) return toast.error("لم نتمكن من تحديد الموقع");
     setBusy(true);
     try {
@@ -84,13 +90,14 @@ export default function Booking() {
 
       <div>
         <h3 className="text-sm text-zinc-400 mb-2">العنوان</h3>
-        <div className="bg-[#121212] border border-white/10 rounded-2xl px-4 py-3 flex items-start gap-3">
-          <MapPin className="w-5 h-5 text-[#D4AF37] mt-0.5" />
+        <div className={`bg-[#121212] border rounded-2xl px-4 py-3 flex items-start gap-3 transition ${addressError ? "border-red-500" : "border-white/10"}`}>
+          <MapPin className={`w-5 h-5 mt-0.5 ${addressError ? "text-red-500" : "text-[#D4AF37]"}`} />
           <textarea data-testid="booking-address-input"
-            value={address} onChange={(e) => setAddress(e.target.value)}
+            value={address} onChange={(e) => { setAddress(e.target.value); if (addressError) setAddressError(false); }}
             rows={2} placeholder="مثال: الكرادة، شارع 62، عمارة 12، الطابق 3"
             className="bg-transparent flex-1 outline-none text-white placeholder:text-zinc-500 text-sm resize-none" />
         </div>
+        {addressError && <div className="text-xs text-red-400 mt-2">الرجاء إدخال العنوان</div>}
       </div>
 
       <div>
