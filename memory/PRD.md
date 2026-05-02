@@ -22,22 +22,30 @@
 - Withdrawal: barber requests via in-app chat with mastercard number.
 
 ## What's Implemented (2026-02)
-- [x] Splash loading screen with brand animation
-- [x] Auth (register/login, role select, admin auto-promotion)
+- [x] Splash loading screen with brand animation (Berber name)
+- [x] **Phone + name + password authentication** (no email)
+- [x] Admin auto-promotion by phone `07812059874`
 - [x] Customer home (4 service tiles, hero, recent bookings, FAB)
-- [x] Booking form (service/address/notes/coords) with inline validation
+- [x] Booking form with inline validation; coords + customer_phone forwarded
 - [x] Map view (Leaflet dark tiles, barbers + customer markers, FAB)
-- [x] Barber dashboard (incoming/mine tabs, accept→ -1000 IQD, reject, in-progress, complete)
+- [x] Barber dashboard:
+  - Customer phone clickable (`tel:`)
+  - "فتح الموقع في الخرائط" link → Google Maps with lat,lng
+  - **Push Notifications** (browser Notification API + audio ping)
+  - Accept (-1,000 IQD) / Reject / Start / Complete
 - [x] Wallet (gross/fees/net for barber, spent for customer, revenue for admin)
-- [x] Support chat (user thread, admin sees grouped threads, WhatsApp/email shortcuts)
+- [x] Support chat (user thread, admin grouped threads, WhatsApp/email shortcuts)
 - [x] Settings (profile, location, logout)
-- [x] Admin dashboard, users list, bookings list
-- [x] Bottom tab nav per role (5 tabs)
-- [x] State-machine guard on booking acceptance (no double-accept)
+- [x] Admin dashboard, users, bookings
+- [x] Bottom tab nav per role
+- [x] State-machine guard on booking accept (409 double-accept)
+- [x] **PWA**: manifest.json, service worker (/sw.js), gold scissors `icon.svg`
+- [x] **Privacy / No-Index**: robots.txt + meta noindex,nofollow,noarchive,nosnippet
+- [x] **Capacitor config** (`capacitor.config.json`, `PUBLISHING.md`) for Google Play & App Store
 
 ## Test Status
-- Backend pytest: **17/17 passing** (auth, services, bookings, wallet, chat, admin, RBAC, profile)
-- Frontend: 100% on tested critical flows
+- Backend pytest: **24/24 passing**
+- Frontend: 100% on tested critical flows (login, booking, accept, push permission, validation)
 
 ## Backlog
 ### P1 — Next Phase
