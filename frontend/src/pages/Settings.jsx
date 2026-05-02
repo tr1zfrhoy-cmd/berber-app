@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { LogOut, User, Phone, Save, MapPin, Edit3, Shield, Image, Plus, Trash2, Camera } from "lucide-react";
 import { toast } from "sonner";
@@ -133,7 +134,8 @@ export default function Settings() {
         </a>
       </div>
 
-      <button data-testid="logout-btn" onClick={() => { logout(); toast.success("تم تسجيل الخروج"); }}
+      <button data-testid="logout-btn"
+        onClick={() => { logout(); toast.success("تم تسجيل الخروج"); navigate("/auth", { replace: true }); }}
         className="w-full py-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-black flex items-center justify-center gap-2 hover:bg-red-500/20 transition">
         <LogOut className="w-4 h-4" /> تسجيل الخروج
       </button>
