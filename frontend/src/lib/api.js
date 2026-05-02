@@ -12,16 +12,10 @@ api.interceptors.request.use((config) => {
 });
 
 export const SUPPORT = {
+  whatsapp_phone: "9647812059874",
   whatsapp: "https://wa.me/9647812059874",
   email: "mailto:tr1zfrhoy@gmail.com",
   phone: "07812059874",
-};
-
-export const SERVICE_ICONS = {
-  full: "Scissors",
-  kids: "Baby",
-  beard: "User",
-  blowdry: "Wind",
 };
 
 export const fmtIQD = (n) => `${(n || 0).toLocaleString("ar-IQ")} د.ع`;

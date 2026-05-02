@@ -1,0 +1,36 @@
+{
+  "summary": "Iteration 3 regression (Berber) — Backend 21/21 pytest passed against external REACT_APP_BACKEND_URL. Covered: services list now has 5 entries with separate 'hair'(5000) and 'beard'(5000), admin auth via 07812059874, duplicate-phone 400, wrong-password 401, GET/PATCH /api/admin/settings (RBAC 403 for customer), platform_fee=500 applied on booking acceptance, barber wallet flow (wallet_balance model): zero-balance barber gets 402 with Arabic 'رصيد' when accepting; admin top-up via POST /api/admin/users/{id}/wallet adds to balance; after top-up to 2000 the accept deducts exactly 500 → balance 1500 and barber_earnings = FULL price (10000); negative admin adjust (-500) → balance 1000; wallet_txns recorded in /api/admin/users/{id} response with correct kind+booking_id; rating gated behind status=completed (400 before, 400 'تم التقييم مسبقا' on double-rate); POST /api/bookings/{id}/rating updates barber rating_avg/count; GET /api/barbers/{id} returns {barber, ratings} and excludes wallet_balance; PATCH /api/auth/me persists avatar + portfolio list. Frontend verified on preview URL: admin Users list row → /app/users/:id detail page with wallet card + top-up form works end-to-end (toast 'تم شحن 1,500 د.ع', wallet txns list updates immediately showing TEST_UI_topup/TEST_deduct/commission); AdminSettings page exposes fee-input, whatsapp-input, svc-name-0/svc-price-0, add-service-btn, save-settings-btn and POST succeeds; barber Settings page has settings-avatar/new-portfolio-input/add-portfolio-btn/save-profile-btn and persists portfolio URL; barber dashboard shows wallet balance card + dashboard-topup-btn; Wallet page for barber has topup-whatsapp-btn with prefilled wa.me URL (msg Arabic: 'مرحباً، أنا الحل…'); Chat page for both roles shows support-whatsapp-main with role-differentiated message (customer: 'مرحباً، أنا الزبون …', barber: 'مرحباً، أنا الحل…'); rate-btn-{id} renders for completed-unrated bookings on customer-home.",
+  "backend_issues": { "critical": [], "minor": [] },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "AdminUserDetail", "issues": ["When avatar URL is invalid/unreachable (e.g. example.com placeholder) the broken <img> icon renders in the profile tile — consider a fallback (initial letter) when the image fails to load"]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_berber.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Public /api/auth/register still accepts role='admin' from arbitrary phones (only ADMIN_PHONE auto-promotes, but an attacker can explicitly pass role='admin' on register with any other phone and be granted admin). Force role ∈ {customer, barber} on public register.",
+    "PATCH /api/auth/me accepts phone changes with zero validation — a user can overwrite their phone to an already-taken number (unique constraint not enforced). Reject duplicates or strip phone from the public update surface.",
+    "POST /api/admin/users/{id}/wallet has no guard on target role; admin can 'top up' a customer or another admin which creates orphan wallet_txns. Restrict to role=='barber'.",
+    "JWT_SECRET falls back to a hardcoded default in server.py:23 — require from env in production.",
+    "CORS uses allow_origins='*' with allow_credentials=True (invalid per spec) — restrict to known origins when credentials are allowed.",
+    "Avatar and portfolio URLs are stored verbatim with no validation — an http(s)://-only whitelist check is cheap and prevents javascript: injections in <img src>.",
+    "normalize_phone() does not canonicalize +964 vs 009647… vs 07… variants, so the admin-phone auto-promote only fires for the exact '07812059874' format.",
+    "Barber public profile GET /api/barbers/{id} projects out wallet_balance (good) but still leaks rating list that includes customer_name — acceptable UX, noted."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_berber.py (rewrote for iteration-3 schema: wallet_balance, fee=500, hair/beard split, dynamic settings, ratings, barber profile, avatar/portfolio PATCH /auth/me)"
+  ],
+  "success_rate": {"backend": "100% (21/21)", "frontend": "100% on all tested iteration-3 flows"},
+  "test_credentials": "Admin 07812059874/Admin@2026, Customer 07700000001/Test@1234, Barber 07700000002/Test@1234 — all working.",
+  "seed_data_creation": "Tests leave: barber wallet ≈ 1000 IQD (after topup 2000, commission -500, adjust -500). One 'hair' pending booking from customer (never accepted after zero-wallet 402) and one 'full' booking that was accepted, completed and rated 5★. Barber rating_avg=5, rating_count≥1. Barber avatar set to https://example.com/avatar.png and portfolio contains https://example.com/1.jpg + 2.jpg + portfolio-ui.jpg placeholders.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression suite: /app/backend/tests/test_berber.py (21 tests, all green). Env var REACT_APP_BACKEND_URL is required when running pytest from shell (frontend/.env supplies it). Key iteration-3 assertions: (1) /api/services returns 5 entries with hair+beard keys and 5000 price each, (2) platform_fee default = 500 (settable via PATCH /api/admin/settings), (3) barber wallet_balance gates accept; on accept: balance -= fee, barber_earnings = price (NOT price-fee), a WalletTxn of kind='commission' is written, (4) POST /api/admin/users/{id}/wallet {amount:+/-N} writes kind='topup'/'adjust' and clamps balance≥0, (5) POST /api/bookings/{id}/rating requires booking.status=='completed' and is single-use per booking. Verified frontend selectors: user-row-*, filter-barber, topup-amount-input, topup-reason-input, topup-add-btn, topup-sub-btn, admin-user-detail, fee-input, whatsapp-input, save-settings-btn, svc-name-0, svc-price-0, add-service-btn, settings-avatar, new-portfolio-input, add-portfolio-btn, save-profile-btn, dashboard-topup-btn, topup-whatsapp-btn, support-whatsapp-main, rate-btn-{id}, rating-modal, star-1..5, rating-comment, submit-rating-btn, nav-المستخدمون, nav-التحكم. WhatsApp CTAs use supportUrl from /app/frontend/src/lib/support.js with role-based pre-filled Arabic messages (customer starts 'مرحباً، أنا الزبون …', barber starts 'مرحباً، أنا الحل…').",
+  "rca of the issue": "No blocking bugs observed. All 25 iteration-3 behaviours from the review_request verified."
+}

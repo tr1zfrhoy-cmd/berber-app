@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
-import { api, SUPPORT } from "../lib/api";
+import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useLocation } from "react-router-dom";
 import { Send, MessageCircle, Phone } from "lucide-react";
 import { toast } from "sonner";
+import { supportWhatsappUrl } from "../lib/support";
+import { errMsg } from "../lib/errors";
 
 export default function Chat() {
   const { user } = useAuth();
@@ -29,6 +31,7 @@ export default function Chat() {
     load();
     const t = setInterval(load, 5000);
     return () => clearInterval(t);
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
@@ -42,13 +45,6 @@ export default function Chat() {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages]);
 
-  // Pre-fill withdrawal request from wallet
-  useEffect(() => {
-    if (user?.role === "barber" && new URLSearchParams(location.search).get("withdraw") === "1") {
-      setText("أرغب بسحب رصيدي. رقم الماستر كارد: ");
-    }
-  }, [location, user]);
-
   const send = async () => {
     if (!text.trim()) return;
     try {
@@ -56,29 +52,40 @@ export default function Chat() {
       await api.post("/chat/messages", payload);
       setText("");
       load();
-    } catch (e) {
-      toast.error("خطأ في إرسال الرسالة");
-    }
+    } catch (e) { toast.error(errMsg(e)); }
   };
+
+  const supportUrl = supportWhatsappUrl(user);
 
   return (
     <div className="px-5 pt-6 pb-4" data-testid="chat-page">
       <header className="mb-4">
         <p className="text-zinc-400 text-sm">الدعم الفني</p>
-        <h1 className="text-2xl font-black">المراسلة المباشرة</h1>
+        <h1 className="text-2xl font-black">تواصل معنا</h1>
       </header>
 
       {!isAdmin && (
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          <a data-testid="support-whatsapp" href={SUPPORT.whatsapp} target="_blank" rel="noreferrer"
-            className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 flex items-center gap-2 text-sm font-bold">
-            <Phone className="w-4 h-4" /> واتساب الدعم
-          </a>
-          <a data-testid="support-email" href={SUPPORT.email}
-            className="p-3 rounded-2xl bg-[#D4AF37]/10 border border-[#D4AF37]/30 text-[#D4AF37] flex items-center gap-2 text-sm font-bold">
-            <MessageCircle className="w-4 h-4" /> راسلنا بالبريد
-          </a>
-        </div>
+        <a data-testid="support-whatsapp-main" href={supportUrl} target="_blank" rel="noreferrer"
+          className="block rounded-2xl p-5 mb-4 bg-gradient-to-br from-emerald-500 to-emerald-700 text-black">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-black/20 flex items-center justify-center">
+              <Phone className="w-6 h-6" />
+            </div>
+            <div className="flex-1">
+              <div className="font-black text-base">راسلنا على واتساب</div>
+              <div className="text-xs opacity-80 mt-0.5">
+                {user?.role === "barber"
+                  ? "لشحن المحفظة وطلب تفاصيل الماستر كارد"
+                  : "لطلب حلاق إلى موقعك مباشرة"}
+              </div>
+            </div>
+            <MessageCircle className="w-5 h-5" />
+          </div>
+        </a>
+      )}
+
+      {isAdmin && (
+        <div className="text-xs text-zinc-500 mb-2">المحادثات الداخلية مع المستخدمين</div>
       )}
 
       {isAdmin && threads.length > 0 && (
@@ -95,10 +102,10 @@ export default function Chat() {
         </div>
       )}
 
-      <div ref={scrollRef} className="rounded-2xl bg-[#0a0a0a] border border-white/5 p-3 space-y-2 h-[55vh] overflow-y-auto">
+      <div ref={scrollRef} className="rounded-2xl bg-[#0a0a0a] border border-white/5 p-3 space-y-2 h-[45vh] overflow-y-auto">
         {messages.length === 0 && (
           <div className="text-center text-zinc-500 text-sm py-8">
-            {isAdmin ? "اختر محادثة" : "ابدأ محادثة مع الدعم"}
+            {isAdmin ? "اختر محادثة" : "أو اكتب رسالة داخل التطبيق..."}
           </div>
         )}
         {messages.map((m) => {

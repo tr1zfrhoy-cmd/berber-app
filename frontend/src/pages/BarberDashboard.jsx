@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { api, fmtIQD } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
-import { Check, X, MapPin, Phone, Clock, PowerOff, Power, Bell, BellOff, Navigation } from "lucide-react";
+import { Check, X, MapPin, Phone, Clock, PowerOff, Power, Bell, BellOff, Navigation, Wallet, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "./CustomerHome";
 import { errMsg } from "../lib/errors";
+import { supportWhatsappUrl } from "../lib/support";
 
 // Tiny notification ping (base64-encoded short beep WAV)
 const PING_URL = "data:audio/wav;base64,UklGRkZIAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YSJIAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIB/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3p6enp6enp6enp6enp6enp6enp5eXl5eXl5eXl5eXl5eXl4eHh4eHh4eHh4eHh4eHd3d3d3d3d3d3d3d3Z2dnZ2dnZ2dnZ2dXV1dXV1dXV1dXR0dHR0dHR0dHRzc3Nzc3Nzc3JycnJycnJycXFxcXFxcXBwcHBwcHBwb29vb29vb25ubm5ubm5tbW1tbW1tbGxsbGxsbGtra2trampqampqaWlpaWlpaGhoaGhoZ2dnZ2dnZmZmZmZlZWVlZWVkZGRkZGRjY2NjY2NiYmJiYmFhYWFhYWBgYGBgX19fX19fXl5eXl5dXV1dXV1cXFxcXFtbW1tbWlpaWlpaWVlZWVlZWFhYWFhYV1dXV1dXVlZWVlZWVVVVVVVVVFRUVFRUU1NTU1NTUlJSUlJSUVFRUVFRUFBQUFBQT09PT09PTk5OTk5OTU1NTU1NTU1NTU1NTU1NTU1NTU1NTk5OTk5OT09PT09PUFBQUFBQUVFRUVFRUlJSUlJSU1NTU1NTVFRUVFRUVVVVVVVVVlZWVlZWV1dXV1dXWFhYWFhYWVlZWVlZWlpaWlpaW1tbW1tbXFxcXFxcXV1dXV1dXl5eXl5eX19fX19fYGBgYGBgYWFhYWFhYmJiYmJiY2NjY2NjZGRkZGRkZWVlZWVlZmZmZmZmZ2dnZ2dnaGhoaGhoaWlpaWlpampqampqa2tra2trbGxsbGxsbW1tbW1tbm5ubm5ub29vb29vcHBwcHBwcXFxcXFxcnJycnJyc3Nzc3NzdHR0dHR0dXV1dXV1dnZ2dnZ2d3d3d3d3eHh4eHh4eXl5eXl5enp6enp6e3t7e3t7fHx8fHx8fX19fX19fn5+fn5+f39/f39/gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIB/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3p6enp6enp6enp6enp6enp6enp5eXl5eXl5eXl5eXl5eXl4eHh4eHh4eHh4eHh4eHd3d3d3d3d3d3d3d3Z2dnZ2dnZ2dnZ2dXV1dXV1dXV1dXR0dHR0dHR0dHRzc3Nzc3Nzc3JycnJycnJycXFxcXFxcXBwcHBwcHBwb29vb29vb25ubm5ubm5tbW1tbW1tbGxsbGxsbGtra2trampqampqaWlpaWlpaGhoaGhoZ2dnZ2dnZmZmZmZlZWVlZWVkZGRkZGRjY2NjY2NiYmJiYmFhYWFhYWBgYGBgX19fX19fXl5eXl5dXV1dXV1cXFxcXFtbW1tbWlpaWlpaWVlZWVlZWFhYWFhYV1dXV1dXVlZWVlZWVVVVVVVVVFRUVFRUU1NTU1NTUlJSUlJSUVFRUVFRUFBQUFBQT09PT09PTk5OTk5OTU1NTU1NTU1NTU1NTU1NTU1NTU1N";
@@ -102,7 +103,7 @@ export default function BarberDashboard() {
           <h1 className="text-2xl font-black">{user?.name}</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button data-testid="enable-push-btn" onClick={enablePush}
+        <button data-testid="enable-push-btn" onClick={enablePush}
             className={`px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 border transition ${
               pushEnabled ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30"
             }`}>
@@ -117,6 +118,21 @@ export default function BarberDashboard() {
           </button>
         </div>
       </header>
+
+      {/* Wallet balance card */}
+      <div className="rounded-2xl p-4 gold-border bg-[#121212] flex items-center gap-4">
+        <Wallet className="w-8 h-8 text-[#D4AF37]" />
+        <div className="flex-1">
+          <div className="text-xs text-zinc-400">رصيد محفظة العمولات</div>
+          <div className="text-xl font-black gold-text">{fmtIQD(user?.wallet_balance || 0)}</div>
+        </div>
+        <a href={supportWhatsappUrl(user)} target="_blank" rel="noreferrer"
+          data-testid="dashboard-topup-btn"
+          className="px-3 py-2 rounded-xl bg-emerald-500 text-black font-black text-xs flex items-center gap-1">
+          <MessageCircle className="w-3.5 h-3.5" /> شحن
+        </a>
+      </div>
+
 
       <div className="flex bg-[#121212] rounded-full p-1 border border-white/5">
         <button data-testid="tab-incoming" onClick={() => setTab("incoming")}

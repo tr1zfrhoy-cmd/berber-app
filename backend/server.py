@@ -22,9 +22,18 @@ db = client[os.environ['DB_NAME']]
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'halaq-delivery-super-secret-key-2026')
 JWT_ALG = 'HS256'
-PLATFORM_FEE = 1000  # IQD per accepted job
+DEFAULT_PLATFORM_FEE = 500  # IQD per accepted job (default, overridable via /api/admin/settings)
 ADMIN_PHONE = "07812059874"
 ADMIN_EMAIL = "tr1zfrhoy@gmail.com"
+SUPPORT_WHATSAPP = "9647812059874"
+
+DEFAULT_SERVICES = [
+    {"key": "full", "name_ar": "حلاقة كاملة", "price": 10000, "icon": "Scissors", "active": True},
+    {"key": "kids", "name_ar": "حلاقة أطفال", "price": 5000, "icon": "Baby", "active": True},
+    {"key": "hair", "name_ar": "شعر فقط", "price": 5000, "icon": "User", "active": True},
+    {"key": "beard", "name_ar": "لحية فقط", "price": 5000, "icon": "Scissors", "active": True},
+    {"key": "blowdry", "name_ar": "سشوار", "price": 5000, "icon": "Wind", "active": True},
+]
 
 
 def normalize_phone(p: str) -> str:
@@ -52,9 +61,12 @@ class User(BaseModel):
     role: Role = "customer"
     avatar: Optional[str] = None
     bio: Optional[str] = None
+    portfolio: List[str] = Field(default_factory=list)
+    wallet_balance: int = 0  # barber's commission wallet
     lat: Optional[float] = None
     lng: Optional[float] = None
-    rating: float = 5.0
+    rating_avg: float = 0.0
+    rating_count: int = 0
     is_online: bool = True
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
@@ -79,6 +91,7 @@ class UpdateProfileIn(BaseModel):
     phone: Optional[str] = None
     bio: Optional[str] = None
     avatar: Optional[str] = None
+    portfolio: Optional[List[str]] = None
     lat: Optional[float] = None
     lng: Optional[float] = None
     is_online: Optional[bool] = None
@@ -134,14 +147,62 @@ class SendMessageIn(BaseModel):
     user_id: Optional[str] = None  # used by admin to reply to a user
 
 
-# Service catalog
-SERVICES = [
-    {"key": "full", "name_ar": "حلاقة كاملة", "price": 10000, "icon": "Scissors"},
-    {"key": "kids", "name_ar": "حلاقة أطفال", "price": 5000, "icon": "Baby"},
-    {"key": "beard", "name_ar": "تحديد لحية / شعر", "price": 5000, "icon": "User"},
-    {"key": "blowdry", "name_ar": "سشوار", "price": 5000, "icon": "Wind"},
-]
-SERVICE_BY_KEY = {s["key"]: s for s in SERVICES}
+# Dynamic service catalog & settings (stored in DB, editable by admin)
+SETTINGS_KEY = "global"
+
+
+async def get_settings() -> dict:
+    s = await db.settings.find_one({"_key": SETTINGS_KEY}, {"_id": 0})
+    if not s:
+        s = {
+            "_key": SETTINGS_KEY,
+            "platform_fee": DEFAULT_PLATFORM_FEE,
+            "services": DEFAULT_SERVICES,
+            "support_whatsapp": SUPPORT_WHATSAPP,
+        }
+        await db.settings.insert_one(s)
+        s.pop("_id", None)
+    # Ensure all keys exist
+    s.setdefault("platform_fee", DEFAULT_PLATFORM_FEE)
+    s.setdefault("services", DEFAULT_SERVICES)
+    s.setdefault("support_whatsapp", SUPPORT_WHATSAPP)
+    return s
+
+
+async def get_service(key: str) -> Optional[dict]:
+    s = await get_settings()
+    for svc in s.get("services", []):
+        if svc["key"] == key and svc.get("active", True):
+            return svc
+    return None
+
+
+class SettingsIn(BaseModel):
+    platform_fee: Optional[int] = None
+    services: Optional[List[dict]] = None
+    support_whatsapp: Optional[str] = None
+
+
+class WalletTopupIn(BaseModel):
+    amount: int  # positive = add, negative = deduct
+    reason: Optional[str] = None
+
+
+class RatingIn(BaseModel):
+    stars: int  # 1..5
+    comment: Optional[str] = None
+
+
+class WalletTxn(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    amount: int
+    kind: Literal["topup", "commission", "adjust"]
+    reason: Optional[str] = None
+    booking_id: Optional[str] = None
+    balance_after: int = 0
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
 # ---------------- Auth helpers ----------------
@@ -195,7 +256,18 @@ async def root():
 
 @api_router.get("/services")
 async def get_services():
-    return SERVICES
+    s = await get_settings()
+    return [x for x in s.get("services", DEFAULT_SERVICES) if x.get("active", True)]
+
+
+@api_router.get("/config")
+async def get_config():
+    """Public config: support whatsapp and visible services."""
+    s = await get_settings()
+    return {
+        "support_whatsapp": s.get("support_whatsapp", SUPPORT_WHATSAPP),
+        "platform_fee": s.get("platform_fee", DEFAULT_PLATFORM_FEE),
+    }
 
 
 @api_router.post("/auth/register")
@@ -263,7 +335,7 @@ async def list_barbers():
 # ---------- Bookings ----------
 @api_router.post("/bookings")
 async def create_booking(payload: CreateBookingIn, user: dict = Depends(require_role("customer"))):
-    svc = SERVICE_BY_KEY.get(payload.service_key)
+    svc = await get_service(payload.service_key)
     if not svc:
         raise HTTPException(status_code=400, detail="خدمة غير معروفة")
     barber_name = None
@@ -310,13 +382,30 @@ async def update_booking_status(booking_id: str, payload: StatusUpdateIn, user: 
     update = {"status": payload.status}
 
     if payload.status == "accepted" and user["role"] == "barber":
-        # State guard: only accept pending unclaimed (or claimed by self) bookings
         if booking["status"] != "pending" or (booking.get("barber_id") and booking["barber_id"] != user["id"]):
             raise HTTPException(status_code=409, detail="الطلب غير متاح للقبول")
+        settings = await get_settings()
+        fee = int(settings.get("platform_fee", DEFAULT_PLATFORM_FEE))
+        current_balance = int(user.get("wallet_balance", 0) or 0)
+        if current_balance < fee:
+            raise HTTPException(
+                status_code=402,
+                detail=f"رصيد محفظتك غير كافٍ ({current_balance:,} د.ع). الرجاء شحن المحفظة — تحتاج {fee:,} د.ع لقبول الطلب."
+            )
+        new_balance = current_balance - fee
+        await db.users.update_one({"id": user["id"]}, {"$set": {"wallet_balance": new_balance}})
+        await db.wallet_txns.insert_one(WalletTxn(
+            user_id=user["id"],
+            amount=-fee,
+            kind="commission",
+            reason=f"عمولة حجز: {booking['service_name']}",
+            booking_id=booking["id"],
+            balance_after=new_balance,
+        ).model_dump())
         update["barber_id"] = user["id"]
         update["barber_name"] = user["name"]
-        update["platform_fee"] = PLATFORM_FEE
-        update["barber_earnings"] = booking["price"] - PLATFORM_FEE
+        update["platform_fee"] = fee
+        update["barber_earnings"] = booking["price"]  # keeps 100% of price (fee already deducted from wallet)
 
     if payload.status in ("rejected", "cancelled") and user["role"] == "customer":
         if booking["customer_id"] != user["id"]:
@@ -331,20 +420,22 @@ async def update_booking_status(booking_id: str, payload: StatusUpdateIn, user: 
 @api_router.get("/wallet/me")
 async def my_wallet(user: dict = Depends(get_current_user)):
     if user["role"] == "barber":
-        completed = await db.bookings.find(
+        bookings = await db.bookings.find(
             {"barber_id": user["id"], "status": {"$in": ["accepted", "in_progress", "completed"]}},
             {"_id": 0},
-        ).to_list(500)
-        gross = sum(b["price"] for b in completed)
-        fees = sum(b.get("platform_fee", 0) for b in completed)
-        net = sum(b.get("barber_earnings", 0) for b in completed)
+        ).sort("created_at", -1).to_list(500)
+        gross = sum(b["price"] for b in bookings)
+        fees = sum(b.get("platform_fee", 0) for b in bookings)
+        txns = await db.wallet_txns.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(500)
+        fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password": 0})
         return {
             "role": "barber",
-            "jobs": len(completed),
+            "jobs": len(bookings),
             "gross": gross,
             "fees": fees,
-            "net": net,
-            "items": completed,
+            "balance": int(fresh.get("wallet_balance", 0) or 0),
+            "items": bookings,
+            "txns": txns,
         }
     elif user["role"] == "customer":
         items = await db.bookings.find(
@@ -434,6 +525,108 @@ async def admin_users(user: dict = Depends(require_role("admin"))):
 async def admin_bookings(user: dict = Depends(require_role("admin"))):
     items = await db.bookings.find({}, {"_id": 0}).sort("created_at", -1).to_list(2000)
     return items
+
+
+# ---------- Admin: Settings (dynamic prices / commission) ----------
+@api_router.get("/admin/settings")
+async def admin_get_settings(user: dict = Depends(require_role("admin"))):
+    return await get_settings()
+
+
+@api_router.patch("/admin/settings")
+async def admin_update_settings(payload: SettingsIn, user: dict = Depends(require_role("admin"))):
+    update = {k: v for k, v in payload.model_dump().items() if v is not None}
+    if update:
+        await db.settings.update_one(
+            {"_key": SETTINGS_KEY},
+            {"$set": update, "$setOnInsert": {"_key": SETTINGS_KEY}},
+            upsert=True,
+        )
+    return await get_settings()
+
+
+# ---------- Admin: Barber detail + wallet top-up ----------
+@api_router.get("/admin/users/{user_id}")
+async def admin_get_user(user_id: str, user: dict = Depends(require_role("admin"))):
+    u = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+    if not u:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    bookings = await db.bookings.find(
+        {"$or": [{"customer_id": user_id}, {"barber_id": user_id}]}, {"_id": 0}
+    ).sort("created_at", -1).to_list(500)
+    txns = await db.wallet_txns.find({"user_id": user_id}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return {"user": u, "bookings": bookings, "txns": txns}
+
+
+@api_router.post("/admin/users/{user_id}/wallet")
+async def admin_topup_wallet(user_id: str, payload: WalletTopupIn, user: dict = Depends(require_role("admin"))):
+    target = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    current = int(target.get("wallet_balance", 0) or 0)
+    new_balance = current + int(payload.amount)
+    if new_balance < 0:
+        new_balance = 0
+    await db.users.update_one({"id": user_id}, {"$set": {"wallet_balance": new_balance}})
+    kind = "topup" if payload.amount >= 0 else "adjust"
+    await db.wallet_txns.insert_one(WalletTxn(
+        user_id=user_id,
+        amount=int(payload.amount),
+        kind=kind,
+        reason=payload.reason or ("شحن يدوي" if payload.amount >= 0 else "خصم يدوي"),
+        balance_after=new_balance,
+    ).model_dump())
+    fresh = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+    return {"user": fresh, "balance": new_balance}
+
+
+# ---------- Ratings ----------
+@api_router.post("/bookings/{booking_id}/rating")
+async def rate_booking(booking_id: str, payload: RatingIn, user: dict = Depends(require_role("customer"))):
+    if payload.stars < 1 or payload.stars > 5:
+        raise HTTPException(status_code=400, detail="التقييم يجب أن يكون بين 1 و 5")
+    booking = await db.bookings.find_one({"id": booking_id}, {"_id": 0})
+    if not booking:
+        raise HTTPException(status_code=404, detail="الطلب غير موجود")
+    if booking["customer_id"] != user["id"]:
+        raise HTTPException(status_code=403, detail="ليس طلبك")
+    if booking["status"] != "completed":
+        raise HTTPException(status_code=400, detail="يمكن التقييم بعد اكتمال الخدمة فقط")
+    if not booking.get("barber_id"):
+        raise HTTPException(status_code=400, detail="لا يوجد حلاق لتقييمه")
+    existing = await db.ratings.find_one({"booking_id": booking_id})
+    if existing:
+        raise HTTPException(status_code=400, detail="تم التقييم مسبقا")
+    rating_doc = {
+        "id": str(uuid.uuid4()),
+        "booking_id": booking_id,
+        "customer_id": user["id"],
+        "customer_name": user["name"],
+        "barber_id": booking["barber_id"],
+        "stars": payload.stars,
+        "comment": payload.comment,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.ratings.insert_one(rating_doc)
+    # Recompute barber aggregate
+    all_ratings = await db.ratings.find({"barber_id": booking["barber_id"]}, {"_id": 0}).to_list(5000)
+    count = len(all_ratings)
+    avg = sum(r["stars"] for r in all_ratings) / count if count else 0
+    await db.users.update_one(
+        {"id": booking["barber_id"]},
+        {"$set": {"rating_avg": round(avg, 2), "rating_count": count}},
+    )
+    rating_doc.pop("_id", None)
+    return rating_doc
+
+
+@api_router.get("/barbers/{barber_id}")
+async def barber_profile(barber_id: str):
+    b = await db.users.find_one({"id": barber_id, "role": "barber"}, {"_id": 0, "password": 0, "wallet_balance": 0})
+    if not b:
+        raise HTTPException(status_code=404, detail="الحلاق غير موجود")
+    ratings = await db.ratings.find({"barber_id": barber_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return {"barber": b, "ratings": ratings}
 
 
 # Include the router in the main app

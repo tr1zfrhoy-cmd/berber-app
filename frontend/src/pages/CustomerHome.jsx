@@ -1,23 +1,29 @@
 import React, { useEffect, useState } from "react";
-import { Scissors, Baby, User as UserIcon, Wind, ArrowLeft, Plus, Sparkles, Clock } from "lucide-react";
+import { Scissors, Baby, User as UserIcon, Wind, ArrowLeft, Plus, Sparkles, Clock, Flame, Star } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { api, fmtIQD } from "../lib/api";
 import { useNavigate } from "react-router-dom";
+import RatingModal from "../components/RatingModal";
 
-const ICON = { Scissors, Baby, User: UserIcon, Wind };
+const ICON = { Scissors, Baby, User: UserIcon, Wind, Sparkles, Flame };
 
 export default function CustomerHome() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [services, setServices] = useState([]);
   const [bookings, setBookings] = useState([]);
+  const [rateBooking, setRateBooking] = useState(null);
+  const [rated, setRated] = useState({});
 
-  useEffect(() => {
-    api.get("/services").then((r) => setServices(r.data));
-    api.get("/bookings").then((r) => setBookings(r.data || []));
-  }, []);
+  const load = async () => {
+    const [s, b] = await Promise.all([api.get("/services"), api.get("/bookings")]);
+    setServices(s.data);
+    setBookings(b.data || []);
+  };
 
-  const recent = bookings.slice(0, 3);
+  useEffect(() => { load(); }, []);
+
+  const recent = bookings.slice(0, 4);
 
   return (
     <div className="px-5 pt-6 space-y-7" data-testid="customer-home">
@@ -31,14 +37,13 @@ export default function CustomerHome() {
         </div>
       </header>
 
-      {/* Hero promo */}
       <div className="relative rounded-3xl overflow-hidden gold-border slide-up" style={{ minHeight: 180 }}>
         <img src="https://images.unsplash.com/photo-1703792684940-a05aa0f1188f?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzNzl8MHwxfHNlYXJjaHwzfHxiYXJiZXIlMjBwb3J0cmFpdHxlbnwwfHx8fDE3Nzc1OTkwNzV8MA&ixlib=rb-4.1.0&q=85"
              alt="" className="absolute inset-0 w-full h-full object-cover opacity-65" />
         <div className="absolute inset-0 bg-gradient-to-l from-transparent via-black/60 to-black/90" />
         <div className="relative p-6">
           <div className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/40 text-[#F3E5AB] text-[11px] font-bold">
-            <Sparkles className="w-3 h-3" /> خصم خاص
+            <Sparkles className="w-3 h-3" /> خدمة فاخرة
           </div>
           <h2 className="text-2xl font-black mt-3 leading-tight">حلاقتك<br/>عند باب بيتك</h2>
           <button data-testid="hero-book-btn" onClick={() => navigate("/app/book")}
@@ -48,7 +53,6 @@ export default function CustomerHome() {
         </div>
       </div>
 
-      {/* Services */}
       <section>
         <h3 className="text-lg font-black mb-3">اختر خدمتك</h3>
         <div className="grid grid-cols-2 gap-3">
@@ -69,7 +73,6 @@ export default function CustomerHome() {
         </div>
       </section>
 
-      {/* Recent bookings */}
       {recent.length > 0 && (
         <section>
           <h3 className="text-lg font-black mb-3">طلباتك الأخيرة</h3>
@@ -82,6 +85,13 @@ export default function CustomerHome() {
                   <div className="text-xs text-zinc-500 flex items-center gap-1 mt-1">
                     <Clock className="w-3 h-3" /> {new Date(b.created_at).toLocaleString("ar-IQ")}
                   </div>
+                  {b.status === "completed" && !rated[b.id] && (
+                    <button data-testid={`rate-btn-${b.id}`}
+                      onClick={() => setRateBooking(b)}
+                      className="mt-2 inline-flex items-center gap-1 text-[11px] px-2.5 py-1 rounded-full bg-[#D4AF37]/15 text-[#D4AF37] border border-[#D4AF37]/30 font-bold">
+                      <Star className="w-3 h-3" /> قيّم الحلاق
+                    </button>
+                  )}
                 </div>
                 <StatusBadge status={b.status} />
               </div>
@@ -90,11 +100,16 @@ export default function CustomerHome() {
         </section>
       )}
 
-      {/* FAB */}
       <button data-testid="fab-quick-book" onClick={() => navigate("/app/book")}
         className="fixed bottom-28 left-5 z-20 w-14 h-14 rounded-full bg-gradient-to-br from-[#F3E5AB] to-[#8B6914] text-black flex items-center justify-center shadow-2xl pulse-gold hover:scale-105 transition">
         <Plus className="w-6 h-6" strokeWidth={3} />
       </button>
+
+      {rateBooking && (
+        <RatingModal booking={rateBooking}
+          onClose={() => setRateBooking(null)}
+          onRated={() => { setRated({ ...rated, [rateBooking.id]: true }); load(); }} />
+      )}
     </div>
   );
 }

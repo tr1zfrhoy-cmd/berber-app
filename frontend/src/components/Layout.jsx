@@ -18,11 +18,11 @@ const barberTabs = [
   { to: "/app/settings", icon: Settings, label: "الإعدادات" },
 ];
 const adminTabs = [
-  { to: "/app", icon: LayoutDashboard, label: "لوحة التحكم", end: true },
+  { to: "/app", icon: LayoutDashboard, label: "اللوحة", end: true },
   { to: "/app/users", icon: Users, label: "المستخدمون" },
   { to: "/app/bookings", icon: ClipboardList, label: "الحجوزات" },
+  { to: "/app/admin-settings", icon: Settings, label: "التحكم" },
   { to: "/app/chat", icon: MessageCircle, label: "الدعم" },
-  { to: "/app/settings", icon: Settings, label: "الإعدادات" },
 ];
 
 export default function Layout({ children }) {

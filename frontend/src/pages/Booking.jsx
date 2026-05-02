@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { api, fmtIQD } from "../lib/api";
-import { ChevronLeft, MapPin, Scissors, Baby, User as UserIcon, Wind, Check } from "lucide-react";
+import { ChevronLeft, MapPin, Scissors, Baby, User as UserIcon, Wind, Check, Sparkles, Flame } from "lucide-react";
 import { toast } from "sonner";
 import { errMsg } from "../lib/errors";
 
-const ICON = { Scissors, Baby, User: UserIcon, Wind };
+const ICON = { Scissors, Baby, User: UserIcon, Wind, Sparkles, Flame };
 
 export default function Booking() {
   const location = useLocation();

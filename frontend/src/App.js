@@ -17,7 +17,9 @@ import Chat from "./pages/Chat";
 import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminUsers from "./pages/AdminUsers";
+import AdminUserDetail from "./pages/AdminUserDetail";
 import AdminBookings from "./pages/AdminBookings";
+import AdminSettings from "./pages/AdminSettings";
 
 const RoleHome = () => {
   const { user } = useAuth();
@@ -40,7 +42,9 @@ const Protected = () => {
         <Route path="chat" element={<Chat />} />
         <Route path="settings" element={<Settings />} />
         <Route path="users" element={<AdminUsers />} />
+        <Route path="users/:id" element={<AdminUserDetail />} />
         <Route path="bookings" element={<AdminBookings />} />
+        <Route path="admin-settings" element={<AdminSettings />} />
       </Routes>
     </Layout>
   );
