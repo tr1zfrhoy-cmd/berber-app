@@ -31,9 +31,29 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script>
+      // Unregister old SWs + clear caches to break any stale preview,
+      // then register the fresh SW. This guarantees the live preview
+      // always serves the latest code.
       if ("serviceWorker" in navigator) {
-        window.addEventListener("load", () => {
-          navigator.serviceWorker.register("/sw.js").catch(() => {});
+        window.addEventListener("load", async () => {
+          try {
+            const regs = await navigator.serviceWorker.getRegistrations();
+            const current = regs.find((r) => r.active && r.active.scriptURL.endsWith("/sw.js"));
+            // If no current SW or it's older, wipe caches once
+            if (!current || !sessionStorage.getItem("berber_sw_v3")) {
+              if ("caches" in window) {
+                const keys = await caches.keys();
+                await Promise.all(keys.map((k) => caches.delete(k)));
+              }
+              sessionStorage.setItem("berber_sw_v3", "1");
+            }
+            await navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" });
+            // Tell any waiting SW to take over immediately
+            navigator.serviceWorker.ready.then((reg) => {
+              if (reg.waiting) reg.waiting.postMessage("SKIP_WAITING");
+              reg.update();
+            });
+          } catch (e) { /* noop */ }
         });
       }
     </script>
