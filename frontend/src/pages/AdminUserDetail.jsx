@@ -50,8 +50,10 @@ export default function AdminUserDetail() {
       {/* Profile header */}
       <div className="rounded-3xl p-5 gold-border bg-[#121212] flex items-center gap-4">
         {user.avatar ? (
-          <img src={user.avatar} alt="" className="w-20 h-20 rounded-2xl object-cover border border-[#D4AF37]/40" />
-        ) : (
+          <img src={user.avatar} alt="" className="w-20 h-20 rounded-2xl object-cover border border-[#D4AF37]/40"
+            onError={(e) => { e.target.style.display = "none"; e.target.nextSibling && (e.target.nextSibling.style.display = "flex"); }} />
+        ) : null}
+        {!user.avatar && (
           <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#8B6914] text-black font-black text-3xl flex items-center justify-center">
             {user.name?.[0]}
           </div>

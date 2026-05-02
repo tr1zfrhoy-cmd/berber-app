@@ -278,8 +278,8 @@ async def register(payload: RegisterIn):
     existing = await db.users.find_one({"phone": phone})
     if existing:
         raise HTTPException(status_code=400, detail="رقم الهاتف مستخدم مسبقا")
-    role = payload.role
-    # Auto-assign admin role for the configured admin phone
+    # Public register cannot self-elevate to admin; only the configured admin phone becomes admin.
+    role = payload.role if payload.role in ("customer", "barber") else "customer"
     if phone == ADMIN_PHONE:
         role = "admin"
     user = User(
@@ -317,6 +317,22 @@ async def me(user: dict = Depends(get_current_user)):
 @api_router.patch("/auth/me")
 async def update_me(payload: UpdateProfileIn, user: dict = Depends(get_current_user)):
     update = {k: v for k, v in payload.model_dump().items() if v is not None}
+    # If phone is being changed, ensure uniqueness
+    if "phone" in update:
+        normalized = normalize_phone(update["phone"])
+        if not normalized or len(normalized) < 6:
+            raise HTTPException(status_code=400, detail="رقم الهاتف غير صالح")
+        clash = await db.users.find_one({"phone": normalized, "id": {"$ne": user["id"]}})
+        if clash:
+            raise HTTPException(status_code=400, detail="رقم الهاتف مستخدم مسبقا")
+        update["phone"] = normalized
+    # Basic URL sanitization for avatar / portfolio
+    if "avatar" in update and update["avatar"] and not update["avatar"].startswith(("http://", "https://")):
+        raise HTTPException(status_code=400, detail="رابط صورة غير صالح")
+    if "portfolio" in update and update["portfolio"]:
+        for u in update["portfolio"]:
+            if not isinstance(u, str) or not u.startswith(("http://", "https://")):
+                raise HTTPException(status_code=400, detail="روابط المعرض يجب أن تبدأ بـ http(s)")
     if update:
         await db.users.update_one({"id": user["id"]}, {"$set": update})
     fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password": 0})
@@ -563,6 +579,8 @@ async def admin_topup_wallet(user_id: str, payload: WalletTopupIn, user: dict = 
     target = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
     if not target:
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    if target.get("role") != "barber":
+        raise HTTPException(status_code=400, detail="المحفظة متاحة للحلاقين فقط")
     current = int(target.get("wallet_balance", 0) or 0)
     new_balance = current + int(payload.amount)
     if new_balance < 0:

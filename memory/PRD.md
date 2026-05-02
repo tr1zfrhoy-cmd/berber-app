@@ -23,29 +23,34 @@
 
 ## What's Implemented (2026-02)
 - [x] Splash loading screen with brand animation (Berber name)
-- [x] **Phone + name + password authentication** (no email)
+- [x] **Phone + name + password authentication** (no email) - admin role escalation blocked
 - [x] Admin auto-promotion by phone `07812059874`
-- [x] Customer home (4 service tiles, hero, recent bookings, FAB)
+- [x] Customer home (services, hero, recent bookings, FAB, rate-barber CTA on completed)
 - [x] Booking form with inline validation; coords + customer_phone forwarded
 - [x] Map view (Leaflet dark tiles, barbers + customer markers, FAB)
 - [x] Barber dashboard:
   - Customer phone clickable (`tel:`)
-  - "فتح الموقع في الخرائط" link → Google Maps with lat,lng
+  - Google Maps link with lat,lng
   - **Push Notifications** (browser Notification API + audio ping)
-  - Accept (-1,000 IQD) / Reject / Start / Complete
-- [x] Wallet (gross/fees/net for barber, spent for customer, revenue for admin)
-- [x] Support chat (user thread, admin grouped threads, WhatsApp/email shortcuts)
-- [x] Settings (profile, location, logout)
-- [x] Admin dashboard, users, bookings
+  - **Wallet balance card** with شحن via WhatsApp CTA
+  - Accept/Reject/Start/Complete state machine
+- [x] **Wallet system**: barber has `wallet_balance`; commission (500 IQD, dynamic) deducted from wallet on accept; barber keeps 100% of booking price
+- [x] **Admin dynamic settings** (`/app/admin-settings`): editable commission, WhatsApp phone, full CRUD on services & prices
+- [x] **Admin user detail page** (`/app/users/:id`): click any user → full profile + **wallet top-up form** (+/- amount, reason)
+- [x] Barber profile: avatar URL, portfolio (URL list), ratings
+- [x] **Ratings system**: 5-star modal after completed bookings; aggregated rating_avg + count on barber; public `/api/barbers/{id}` with reviews
+- [x] Services split: full, kids, hair, beard, blowdry (all editable from admin)
+- [x] Support chat + **WhatsApp pre-filled messages** by role (customer/barber)
+- [x] Settings (profile, avatar, portfolio, location, WhatsApp support, logout)
 - [x] Bottom tab nav per role
-- [x] State-machine guard on booking accept (409 double-accept)
-- [x] **PWA**: manifest.json, service worker (/sw.js), gold scissors `icon.svg`
-- [x] **Privacy / No-Index**: robots.txt + meta noindex,nofollow,noarchive,nosnippet
-- [x] **Capacitor config** (`capacitor.config.json`, `PUBLISHING.md`) for Google Play & App Store
+- [x] State-machine guard on booking accept + 402 balance check
+- [x] **PWA**: manifest.json, service worker, new scissors icon.svg
+- [x] **Privacy / No-Index**: robots.txt + meta noindex,nofollow,noarchive
+- [x] **Capacitor config** + `/app/PUBLISHING.md` for store publishing
 
 ## Test Status
-- Backend pytest: **24/24 passing**
-- Frontend: 100% on tested critical flows (login, booking, accept, push permission, validation)
+- Backend pytest: **21/21 passing** (iteration 3)
+- Frontend: 100% on all tested iteration-3 flows
 
 ## Backlog
 ### P1 — Next Phase
