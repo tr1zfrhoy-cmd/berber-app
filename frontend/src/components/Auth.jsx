@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Scissors, User, Phone, Mail, KeyRound, ChevronLeft } from "lucide-react";
+import { Scissors, User, Phone, KeyRound, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
+import { errMsg } from "../lib/errors";
 
 export default function Auth() {
   const { login, register } = useAuth();
-  const [mode, setMode] = useState("login"); // login | register
+  const [mode, setMode] = useState("login");
   const [role, setRole] = useState("customer");
-  const [form, setForm] = useState({ name: "", email: "", phone: "", password: "" });
+  const [form, setForm] = useState({ name: "", phone: "", password: "" });
   const [busy, setBusy] = useState(false);
 
   const submit = async (e) => {
@@ -15,7 +16,7 @@ export default function Auth() {
     setBusy(true);
     try {
       if (mode === "login") {
-        await login(form.email.trim(), form.password);
+        await login(form.phone.trim(), form.password);
         toast.success("مرحبا بعودتك!");
       } else {
         let lat = null, lng = null;
@@ -28,11 +29,11 @@ export default function Auth() {
             setTimeout(res, 4000);
           });
         } catch {}
-        await register({ ...form, role, lat, lng });
+        await register({ name: form.name, phone: form.phone.trim(), password: form.password, role, lat, lng });
         toast.success("تم إنشاء الحساب!");
       }
     } catch (err) {
-      toast.error(err?.response?.data?.detail || "حدث خطأ، حاول مرة أخرى");
+      toast.error(errMsg(err));
     } finally {
       setBusy(false);
     }
@@ -45,13 +46,13 @@ export default function Auth() {
 
       <div className="flex-1 flex items-center justify-center p-6 relative z-10">
         <div className="w-full max-w-md slide-up">
-          <div className="flex items-center justify-center mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#8B6914] flex items-center justify-center">
-              <Scissors className="w-8 h-8 text-black" strokeWidth={2.4} />
+          <div className="flex items-center justify-center mb-6">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#F3E5AB] via-[#D4AF37] to-[#8B6914] flex items-center justify-center shadow-2xl gold-border">
+              <Scissors className="w-10 h-10 text-black" strokeWidth={2.4} />
             </div>
           </div>
 
-          <h1 className="text-3xl font-black text-center gold-text">حلاق دلفري</h1>
+          <h1 className="text-4xl font-black text-center gold-text tracking-tight">Berber</h1>
           <p className="text-center text-zinc-400 text-sm mt-1">حلاقة فاخرة لباب بيتك</p>
 
           <div className="mt-8 glass rounded-3xl p-6 gold-border">
@@ -83,12 +84,10 @@ export default function Auth() {
                   </div>
                   <Field icon={<User className="w-4 h-4" />} placeholder="الاسم الكامل" value={form.name}
                     onChange={(v) => setForm({ ...form, name: v })} testid="auth-name-input" />
-                  <Field icon={<Phone className="w-4 h-4" />} placeholder="رقم الهاتف" value={form.phone}
-                    onChange={(v) => setForm({ ...form, phone: v })} testid="auth-phone-input" />
                 </>
               )}
-              <Field icon={<Mail className="w-4 h-4" />} placeholder="البريد الإلكتروني" type="email" value={form.email}
-                onChange={(v) => setForm({ ...form, email: v })} testid="auth-email-input" />
+              <Field icon={<Phone className="w-4 h-4" />} placeholder="رقم الهاتف (07XXXXXXXXX)" type="tel" value={form.phone}
+                onChange={(v) => setForm({ ...form, phone: v })} testid="auth-phone-input" />
               <Field icon={<KeyRound className="w-4 h-4" />} placeholder="كلمة المرور" type="password" value={form.password}
                 onChange={(v) => setForm({ ...form, password: v })} testid="auth-password-input" />
 
@@ -120,6 +119,8 @@ const Field = ({ icon, placeholder, value, onChange, type = "text", testid }) =>
       value={value}
       onChange={(e) => onChange(e.target.value)}
       className="bg-transparent outline-none text-white placeholder:text-zinc-500 flex-1 text-sm"
+      dir={type === "tel" ? "ltr" : undefined}
+      style={type === "tel" ? { textAlign: "right" } : undefined}
     />
   </div>
 );

@@ -1,0 +1,34 @@
+{
+  "appId": "com.berber.app",
+  "appName": "Berber",
+  "webDir": "build",
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https",
+    "url": "https://9504a199-42ac-4791-b0ae-a14c1b5df2c9.preview.emergentagent.com",
+    "cleartext": false
+  },
+  "android": {
+    "backgroundColor": "#050505",
+    "allowMixedContent": false
+  },
+  "ios": {
+    "backgroundColor": "#050505",
+    "contentInset": "always"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#050505",
+      "showSpinner": false,
+      "androidSplashResourceName": "splash"
+    },
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_notify",
+      "iconColor": "#D4AF37"
+    }
+  }
+}

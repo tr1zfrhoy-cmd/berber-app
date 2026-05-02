@@ -1,0 +1,35 @@
+{
+  "summary": "Iteration 2 regression for Berber phone-based auth + PWA. Backend: 24/24 pytest passed against external REACT_APP_BACKEND_URL covering phone-based register/login, admin auto-promotion via phone 07812059874, duplicate-phone 400, wrong-password/unknown-phone 401, services catalog (4x), booking creation with customer_phone+lat+lng, barber sees pending with customer_phone visible, accept applies platform_fee=1000 and barber_earnings=price-1000, double-accept correctly 409, wallet gross/fees=1000*N/net, RBAC (403 non-admin on /admin/stats), admin users/bookings, and PWA static assets (/manifest.json name=Berber, /sw.js 200, /icon.svg 200, /robots.txt Disallow: /, index.html noindex+nofollow). Frontend: Auth screen shows Berber name + gold scissors icon + phone field (NO email field). Customer logs in via phone, customer-home renders, service-full tile opens booking-page; empty confirm surfaces inline Arabic validation and does not navigate; after filling address, confirm-booking-btn successfully creates booking and returns to /app. Logout works. Barber logs in via phone, barber-dashboard shows 2 pending bookings with: customer phone rendered as tel: link (e.g. tel:07700000001), map link href=https://www.google.com/maps?q=33.3152,44.3661, accept/reject buttons, enable-push-btn and toggle-online-btn visible.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_berber.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Public /api/auth/register still accepts role='admin' from arbitrary phones (only ADMIN_PHONE auto-promotes, but a caller can pass role='admin' explicitly and be granted admin if phone != admin). Recommend forcing role to 'customer' or 'barber' on public register and ignoring/rejecting role='admin'.",
+    "normalize_phone() only trims spaces/dashes; it does NOT normalize +964 vs 0-prefixed variants, so '009647812059874' or '+9647812059874' would NOT auto-promote admin and would create a parallel account. Consider canonicalizing Iraqi numbers.",
+    "JWT_SECRET still falls back to a hardcoded default; require it from env in production and fail fast if missing.",
+    "CORS allow_origins default '*' with allow_credentials=True is invalid per spec; restrict when credentials allowed.",
+    "GET /api/bookings as barber returns ALL pending+claimed-by-self bookings with full customer_phone; that is the desired feature but worth noting as PII exposure — consider masking until accepted, or after cancellation."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_berber.py (new, replaces test_halaq.py)",
+    "/app/backend/tests/test_halaq.py (removed — used old email schema)"
+  ],
+  "success_rate": {"backend": "100% (24/24)", "frontend": "100% on tested critical flows"},
+  "test_credentials": "Admin 07812059874/Admin@2026, Customer 07700000001/Test@1234, Barber 07700000002/Test@1234 — all working.",
+  "seed_data_creation": "Tests created a TEST_-prefixed registered customer each run, one 'full' booking (10000 IQD) subsequently accepted by the seeded barber (platform_fee=1000, barber_earnings=9000). Frontend run also left one additional pending booking from customer 07700000001 that was accepted by the barber during the test.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Regression suite is /app/backend/tests/test_berber.py (24 tests, all green) — it covers phone-based auth, booking state machine with 409 double-accept, wallet math, RBAC, and PWA assets. BASE_URL is sourced strictly from env (no default). If re-running, the barber's wallet will accumulate across runs; assertions use >= so idempotent. Frontend selectors verified: auth-phone-input, auth-password-input, auth-submit-btn, auth-tab-login/register, customer-home, service-full, booking-page, booking-address-input, confirm-booking-btn, barber-dashboard, enable-push-btn, toggle-online-btn, map-link-{id}, call-customer-{id}, accept-{id}, reject-{id}, logout-btn.",
+  "rca of the issue": "No blocking bugs observed. The iteration-1 booking-validation gap is resolved: empty address now keeps the user on /book and shows Arabic validation text; with address filled, the booking is posted and navigation returns to /app."
+}

@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="40%" r="70%">
+      <stop offset="0%" stop-color="#1a1a1a"/>
+      <stop offset="100%" stop-color="#000000"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F3E5AB"/>
+      <stop offset="50%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#8B6914"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Rounded square dark background -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+
+  <!-- Inner gold border ring -->
+  <rect x="22" y="22" width="468" height="468" rx="96" fill="none" stroke="url(#gold)" stroke-width="3" opacity="0.5"/>
+
+  <!-- Decorative arcs -->
+  <circle cx="256" cy="256" r="170" fill="none" stroke="url(#gold)" stroke-width="1" opacity="0.15"/>
+  <circle cx="256" cy="256" r="130" fill="none" stroke="url(#gold)" stroke-width="1" opacity="0.25"/>
+
+  <!-- Scissors group, centered, rotated for elegance -->
+  <g transform="translate(256 256) rotate(-30) translate(-128 -128)" filter="url(#glow)">
+    <!-- Blade 1 -->
+    <path d="M76 170 L172 100 L210 124 L130 196 Z"
+          fill="url(#gold)" stroke="#000" stroke-width="3" stroke-linejoin="round"/>
+    <!-- Blade 2 -->
+    <path d="M180 170 L84 100 L46 124 L126 196 Z"
+          fill="url(#gold)" stroke="#000" stroke-width="3" stroke-linejoin="round"/>
+    <!-- Pivot -->
+    <circle cx="128" cy="148" r="12" fill="#000" stroke="url(#gold)" stroke-width="3"/>
+    <circle cx="128" cy="148" r="4" fill="url(#gold)"/>
+    <!-- Handle ring 1 -->
+    <circle cx="56" cy="220" r="32" fill="none" stroke="url(#gold)" stroke-width="14"/>
+    <!-- Handle ring 2 -->
+    <circle cx="200" cy="220" r="32" fill="none" stroke="url(#gold)" stroke-width="14"/>
+  </g>
+
+  <!-- Shine highlight -->
+  <ellipse cx="180" cy="120" rx="80" ry="20" fill="#fff" opacity="0.04"/>
+</svg>

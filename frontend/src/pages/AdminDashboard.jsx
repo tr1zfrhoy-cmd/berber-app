@@ -13,7 +13,7 @@ export default function AdminDashboard() {
     <div className="px-5 pt-6 space-y-5" data-testid="admin-dashboard">
       <header>
         <p className="text-zinc-400 text-sm">لوحة التحكم</p>
-        <h1 className="text-2xl font-black">إدارة منصة حلاق دلفري</h1>
+        <h1 className="text-2xl font-black">إدارة منصة Berber</h1>
       </header>
 
       <div className="rounded-3xl p-6 gold-border" style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)" }}>

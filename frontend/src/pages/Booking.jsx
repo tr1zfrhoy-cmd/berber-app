@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { api, fmtIQD } from "../lib/api";
 import { ChevronLeft, MapPin, Scissors, Baby, User as UserIcon, Wind, Check } from "lucide-react";
 import { toast } from "sonner";
+import { errMsg } from "../lib/errors";
 
 const ICON = { Scissors, Baby, User: UserIcon, Wind };
 
@@ -51,7 +52,7 @@ export default function Booking() {
       toast.success("تم إرسال الطلب! بانتظار حلاق");
       navigate("/app");
     } catch (e) {
-      toast.error(e?.response?.data?.detail || "خطأ أثناء الحجز");
+      toast.error(errMsg(e, "خطأ أثناء الحجز"));
     } finally {
       setBusy(false);
     }

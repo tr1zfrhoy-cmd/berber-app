@@ -83,7 +83,7 @@ export default function Settings() {
       </button>
 
       <div className="text-center text-zinc-600 text-xs py-4">
-        حلاق دلفري · v1.0 · 2026
+        Berber · v1.0 · 2026
       </div>
     </div>
   );

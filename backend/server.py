@@ -23,7 +23,16 @@ db = client[os.environ['DB_NAME']]
 JWT_SECRET = os.environ.get('JWT_SECRET', 'halaq-delivery-super-secret-key-2026')
 JWT_ALG = 'HS256'
 PLATFORM_FEE = 1000  # IQD per accepted job
+ADMIN_PHONE = "07812059874"
 ADMIN_EMAIL = "tr1zfrhoy@gmail.com"
+
+
+def normalize_phone(p: str) -> str:
+    """Strip spaces/dashes, keep digits and leading +."""
+    if not p:
+        return p
+    p = p.strip().replace(" ", "").replace("-", "")
+    return p
 
 app = FastAPI()
 api_router = APIRouter(prefix="/api")
@@ -38,8 +47,8 @@ class User(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
-    email: EmailStr
-    phone: Optional[str] = None
+    phone: str
+    email: Optional[str] = None
     role: Role = "customer"
     avatar: Optional[str] = None
     bio: Optional[str] = None
@@ -52,16 +61,16 @@ class User(BaseModel):
 
 class RegisterIn(BaseModel):
     name: str
-    email: EmailStr
+    phone: str
     password: str
-    phone: Optional[str] = None
+    email: Optional[str] = None
     role: Role = "customer"
     lat: Optional[float] = None
     lng: Optional[float] = None
 
 
 class LoginIn(BaseModel):
-    email: EmailStr
+    phone: str
     password: str
 
 
@@ -191,17 +200,20 @@ async def get_services():
 
 @api_router.post("/auth/register")
 async def register(payload: RegisterIn):
-    existing = await db.users.find_one({"email": payload.email})
+    phone = normalize_phone(payload.phone)
+    if not phone or len(phone) < 6:
+        raise HTTPException(status_code=400, detail="رقم الهاتف غير صالح")
+    existing = await db.users.find_one({"phone": phone})
     if existing:
-        raise HTTPException(status_code=400, detail="البريد مستخدم مسبقا")
+        raise HTTPException(status_code=400, detail="رقم الهاتف مستخدم مسبقا")
     role = payload.role
-    # Auto-assign admin role for the configured admin email
-    if payload.email.lower() == ADMIN_EMAIL.lower():
+    # Auto-assign admin role for the configured admin phone
+    if phone == ADMIN_PHONE:
         role = "admin"
     user = User(
         name=payload.name,
+        phone=phone,
         email=payload.email,
-        phone=payload.phone,
         role=role,
         lat=payload.lat,
         lng=payload.lng,
@@ -215,9 +227,10 @@ async def register(payload: RegisterIn):
 
 @api_router.post("/auth/login")
 async def login(payload: LoginIn):
-    doc = await db.users.find_one({"email": payload.email})
+    phone = normalize_phone(payload.phone)
+    doc = await db.users.find_one({"phone": phone})
     if not doc or not verify_pw(payload.password, doc.get("password", "")):
-        raise HTTPException(status_code=401, detail="بيانات الدخول غير صحيحة")
+        raise HTTPException(status_code=401, detail="رقم الهاتف أو كلمة المرور غير صحيحة")
     doc.pop("_id", None)
     doc.pop("password", None)
     token = create_token(doc["id"], doc["role"])

@@ -27,7 +27,7 @@ export default function Splash({ onDone }) {
           </div>
         </div>
         <div className="text-center">
-          <h1 className="text-4xl sm:text-5xl font-black gold-text tracking-tight">حلاق دلفري</h1>
+          <h1 className="text-4xl sm:text-5xl font-black gold-text tracking-tight">Berber</h1>
           <p className="mt-2 text-sm text-zinc-400 tracking-widest">BARBER · DELIVERY · LUXURY</p>
         </div>
         <div className="w-64 h-[3px] rounded-full bg-zinc-900 overflow-hidden">
