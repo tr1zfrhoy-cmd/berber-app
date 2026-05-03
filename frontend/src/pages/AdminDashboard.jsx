@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { api, fmtIQD } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
-import { Users, Scissors, ClipboardList, TrendingUp, LogOut } from "lucide-react";
+import { Users, Scissors, ClipboardList, TrendingUp, LogOut, Percent, Settings as SettingsIcon } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
+  const [fee, setFee] = useState(null);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => { api.get("/admin/stats").then((r) => setStats(r.data)); }, []);
+  useEffect(() => {
+    api.get("/admin/stats").then((r) => setStats(r.data));
+    api.get("/admin/settings").then((r) => setFee(r.data?.platform_fee));
+  }, []);
 
   const doLogout = () => {
     logout();
@@ -34,8 +38,25 @@ export default function AdminDashboard() {
         </button>
       </header>
 
+      {/* Current commission card (editable via Settings tab) */}
+      <Link to="/app/admin-settings" data-testid="current-fee-card"
+        className="block rounded-2xl p-4 bg-[#121212] border border-[#D4AF37]/30 hover:border-[#D4AF37]/60 transition">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-[#D4AF37]/15 border border-[#D4AF37]/30 flex items-center justify-center">
+            <Percent className="w-5 h-5 text-[#D4AF37]" />
+          </div>
+          <div className="flex-1">
+            <div className="text-xs text-zinc-400">العمولة الحالية (لكل حلاقة)</div>
+            <div className="text-2xl font-black gold-text">{fee !== null ? fmtIQD(fee) : "..."}</div>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-[#D4AF37] font-bold">
+            <SettingsIcon className="w-3.5 h-3.5" /> تعديل
+          </div>
+        </div>
+      </Link>
+
       <div className="rounded-3xl p-6 gold-border" style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)" }}>
-        <div className="text-zinc-400 text-xs">إيرادات المنصة (إجمالي الاستقطاعات)</div>
+        <div className="text-zinc-400 text-xs">إيرادات المنصة الإجمالية (مجموع العمولات المحصّلة من كل الحجوزات السابقة)</div>
         <div className="mt-2 text-4xl font-black gold-text">{fmtIQD(stats.revenue)}</div>
         <div className="mt-1 text-xs text-zinc-500">{stats.completed} حلاقة مكتملة من إجمالي {stats.bookings}</div>
       </div>
