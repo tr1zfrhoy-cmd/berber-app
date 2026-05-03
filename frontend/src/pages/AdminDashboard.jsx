@@ -55,12 +55,6 @@ export default function AdminDashboard() {
         </div>
       </Link>
 
-      <div className="rounded-3xl p-6 gold-border" style={{ background: "linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%)" }}>
-        <div className="text-zinc-400 text-xs">إيرادات المنصة الإجمالية (مجموع العمولات المحصّلة من كل الحجوزات السابقة)</div>
-        <div className="mt-2 text-4xl font-black gold-text">{fmtIQD(stats.revenue)}</div>
-        <div className="mt-1 text-xs text-zinc-500">{stats.completed} حلاقة مكتملة من إجمالي {stats.bookings}</div>
-      </div>
-
       <div className="grid grid-cols-2 gap-3">
         <Stat icon={<Users className="w-5 h-5" />} label="المستخدمون" value={stats.users} />
         <Stat icon={<Scissors className="w-5 h-5" />} label="الحلاقون" value={stats.barbers} />
