@@ -6,7 +6,9 @@ import { Save, Plus, Trash2, Scissors } from "lucide-react";
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState(null);
+  const [savedFee, setSavedFee] = useState(null); // last value confirmed from DB
   const [busy, setBusy] = useState(false);
+  const [feeBusy, setFeeBusy] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -14,7 +16,22 @@ export default function AdminSettings() {
     try {
       const { data } = await api.get("/admin/settings");
       setSettings({ platform_fee: data.platform_fee, services: data.services, support_whatsapp: data.support_whatsapp });
+      setSavedFee(data.platform_fee);
     } catch (e) { toast.error(errMsg(e)); }
+  };
+
+  // Dedicated commission saver — persists JUST the fee to the DB.
+  const saveFee = async () => {
+    const n = parseInt(settings.platform_fee);
+    if (isNaN(n) || n < 0) return toast.error("أدخل قيمة صحيحة للعمولة");
+    setFeeBusy(true);
+    try {
+      const { data } = await api.patch("/admin/settings", { platform_fee: n });
+      setSavedFee(data.platform_fee);
+      setSettings((s) => ({ ...s, platform_fee: data.platform_fee }));
+      toast.success(`تم حفظ العمولة: ${data.platform_fee.toLocaleString("ar-IQ")} د.ع`);
+    } catch (e) { toast.error(errMsg(e)); }
+    finally { setFeeBusy(false); }
   };
 
   const save = async () => {
@@ -68,6 +85,15 @@ export default function AdminSettings() {
             dir="ltr" style={{ textAlign: "right" }} />
           <span className="text-zinc-400 text-sm">د.ع</span>
         </div>
+        <button data-testid="save-fee-btn" onClick={saveFee} disabled={feeBusy}
+          className="mt-3 w-full py-3 rounded-xl bg-emerald-500 text-black font-black text-sm flex items-center justify-center gap-2 hover:bg-emerald-400 transition disabled:opacity-50">
+          <Save className="w-4 h-4" /> {feeBusy ? "جاري الحفظ..." : "حفظ العمولة في قاعدة البيانات"}
+        </button>
+        {savedFee !== null && (
+          <div className="mt-2 text-center text-[11px] text-zinc-500">
+            القيمة المحفوظة حالياً في القاعدة: <span className="gold-text font-black">{savedFee.toLocaleString("ar-IQ")} د.ع</span>
+          </div>
+        )}
       </div>
 
       {/* WhatsApp */}
