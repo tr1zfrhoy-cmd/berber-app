@@ -344,7 +344,7 @@ async def update_me(payload: UpdateProfileIn, user: dict = Depends(get_current_u
 async def list_barbers():
     barbers = await db.users.find(
         {"role": "barber"}, {"_id": 0, "password": 0}
-    ).to_list(500)
+    ).limit(100).to_list(100)
     return barbers
 
 
@@ -385,7 +385,7 @@ async def list_bookings(user: dict = Depends(get_current_user)):
         q = {"$or": [{"barber_id": user["id"]}, {"barber_id": None, "status": "pending"}]}
     else:
         q = {}
-    items = await db.bookings.find(q, {"_id": 0}).sort("created_at", -1).to_list(500)
+    items = await db.bookings.find(q, {"_id": 0}).sort("created_at", -1).limit(100).to_list(100)
     return items
 
 
@@ -439,14 +439,20 @@ async def my_wallet(user: dict = Depends(get_current_user)):
         bookings = await db.bookings.find(
             {"barber_id": user["id"], "status": {"$in": ["accepted", "in_progress", "completed"]}},
             {"_id": 0},
-        ).sort("created_at", -1).to_list(500)
-        gross = sum(b["price"] for b in bookings)
-        fees = sum(b.get("platform_fee", 0) for b in bookings)
-        txns = await db.wallet_txns.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).to_list(500)
+        ).sort("created_at", -1).limit(50).to_list(50)
+        # Aggregate gross / fees over the same scope (only on barber's bookings)
+        agg = await db.bookings.aggregate([
+            {"$match": {"barber_id": user["id"], "status": {"$in": ["accepted", "in_progress", "completed"]}}},
+            {"$group": {"_id": None, "gross": {"$sum": "$price"}, "fees": {"$sum": "$platform_fee"}, "n": {"$sum": 1}}},
+        ]).to_list(1)
+        gross = agg[0]["gross"] if agg else 0
+        fees = agg[0]["fees"] if agg else 0
+        n = agg[0]["n"] if agg else 0
+        txns = await db.wallet_txns.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).limit(50).to_list(50)
         fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password": 0})
         return {
             "role": "barber",
-            "jobs": len(bookings),
+            "jobs": n,
             "gross": gross,
             "fees": fees,
             "balance": int(fresh.get("wallet_balance", 0) or 0),
@@ -456,27 +462,37 @@ async def my_wallet(user: dict = Depends(get_current_user)):
     elif user["role"] == "customer":
         items = await db.bookings.find(
             {"customer_id": user["id"]}, {"_id": 0}
-        ).to_list(500)
-        spent = sum(b["price"] for b in items if b["status"] in ("accepted", "completed", "in_progress"))
-        return {"role": "customer", "spent": spent, "jobs": len(items), "items": items}
+        ).sort("created_at", -1).limit(50).to_list(50)
+        spent_agg = await db.bookings.aggregate([
+            {"$match": {"customer_id": user["id"], "status": {"$in": ["accepted", "completed", "in_progress"]}}},
+            {"$group": {"_id": None, "spent": {"$sum": "$price"}, "n": {"$sum": 1}}},
+        ]).to_list(1)
+        spent = spent_agg[0]["spent"] if spent_agg else 0
+        total_jobs = await db.bookings.count_documents({"customer_id": user["id"]})
+        return {"role": "customer", "spent": spent, "jobs": total_jobs, "items": items}
     else:
-        all_b = await db.bookings.find({}, {"_id": 0}).to_list(2000)
-        revenue = sum(b.get("platform_fee", 0) for b in all_b)
-        return {"role": "admin", "platform_revenue": revenue, "total_jobs": len(all_b)}
+        rev_agg = await db.bookings.aggregate([
+            {"$group": {"_id": None, "revenue": {"$sum": "$platform_fee"}, "n": {"$sum": 1}}},
+        ]).to_list(1)
+        revenue = rev_agg[0]["revenue"] if rev_agg else 0
+        total_jobs = rev_agg[0]["n"] if rev_agg else 0
+        return {"role": "admin", "platform_revenue": revenue, "total_jobs": total_jobs}
 
 
 # ---------- Support Chat ----------
 @api_router.get("/chat/messages")
 async def get_my_messages(user: dict = Depends(get_current_user)):
     if user["role"] == "admin":
-        # All threads grouped by user
-        msgs = await db.chat_messages.find({}, {"_id": 0}).sort("created_at", 1).to_list(5000)
+        # All threads grouped by user (latest 500 messages)
+        msgs = await db.chat_messages.find({}, {"_id": 0}).sort("created_at", -1).limit(500).to_list(500)
+        msgs.reverse()  # chronological order
         threads = {}
         for m in msgs:
             threads.setdefault(m["user_id"], {"user_id": m["user_id"], "user_name": m["user_name"], "user_role": m["user_role"], "messages": []})
             threads[m["user_id"]]["messages"].append(m)
         return list(threads.values())
-    msgs = await db.chat_messages.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", 1).to_list(2000)
+    msgs = await db.chat_messages.find({"user_id": user["id"]}, {"_id": 0}).sort("created_at", -1).limit(100).to_list(100)
+    msgs.reverse()
     return msgs
 
 
@@ -517,8 +533,10 @@ async def admin_stats(user: dict = Depends(require_role("admin"))):
     pending = await db.bookings.count_documents({"status": "pending"})
     completed = await db.bookings.count_documents({"status": "completed"})
     accepted = await db.bookings.count_documents({"status": "accepted"})
-    all_b = await db.bookings.find({}, {"_id": 0}).to_list(5000)
-    revenue = sum(b.get("platform_fee", 0) for b in all_b)
+    rev_agg = await db.bookings.aggregate([
+        {"$group": {"_id": None, "revenue": {"$sum": "$platform_fee"}}}
+    ]).to_list(1)
+    revenue = rev_agg[0]["revenue"] if rev_agg else 0
     return {
         "users": users_count,
         "customers": customers,
@@ -532,14 +550,16 @@ async def admin_stats(user: dict = Depends(require_role("admin"))):
 
 
 @api_router.get("/admin/users")
-async def admin_users(user: dict = Depends(require_role("admin"))):
-    users = await db.users.find({}, {"_id": 0, "password": 0}).to_list(2000)
+async def admin_users(user: dict = Depends(require_role("admin")), skip: int = 0, limit: int = 100):
+    limit = min(max(int(limit), 1), 200)
+    users = await db.users.find({}, {"_id": 0, "password": 0}).sort("created_at", -1).skip(int(skip)).limit(limit).to_list(limit)
     return users
 
 
 @api_router.get("/admin/bookings")
-async def admin_bookings(user: dict = Depends(require_role("admin"))):
-    items = await db.bookings.find({}, {"_id": 0}).sort("created_at", -1).to_list(2000)
+async def admin_bookings(user: dict = Depends(require_role("admin")), skip: int = 0, limit: int = 100):
+    limit = min(max(int(limit), 1), 200)
+    items = await db.bookings.find({}, {"_id": 0}).sort("created_at", -1).skip(int(skip)).limit(limit).to_list(limit)
     return items
 
 
@@ -569,8 +589,8 @@ async def admin_get_user(user_id: str, user: dict = Depends(require_role("admin"
         raise HTTPException(status_code=404, detail="المستخدم غير موجود")
     bookings = await db.bookings.find(
         {"$or": [{"customer_id": user_id}, {"barber_id": user_id}]}, {"_id": 0}
-    ).sort("created_at", -1).to_list(500)
-    txns = await db.wallet_txns.find({"user_id": user_id}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    ).sort("created_at", -1).limit(100).to_list(100)
+    txns = await db.wallet_txns.find({"user_id": user_id}, {"_id": 0}).sort("created_at", -1).limit(100).to_list(100)
     return {"user": u, "bookings": bookings, "txns": txns}
 
 
@@ -626,13 +646,15 @@ async def rate_booking(booking_id: str, payload: RatingIn, user: dict = Depends(
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.ratings.insert_one(rating_doc)
-    # Recompute barber aggregate
-    all_ratings = await db.ratings.find({"barber_id": booking["barber_id"]}, {"_id": 0}).to_list(5000)
-    count = len(all_ratings)
-    avg = sum(r["stars"] for r in all_ratings) / count if count else 0
+    # Incremental rating aggregate (avoid scanning all ratings)
+    barber_doc = await db.users.find_one({"id": booking["barber_id"]}, {"_id": 0, "rating_avg": 1, "rating_count": 1})
+    old_count = int(barber_doc.get("rating_count", 0) or 0)
+    old_avg = float(barber_doc.get("rating_avg", 0) or 0)
+    new_count = old_count + 1
+    new_avg = (old_avg * old_count + payload.stars) / new_count
     await db.users.update_one(
         {"id": booking["barber_id"]},
-        {"$set": {"rating_avg": round(avg, 2), "rating_count": count}},
+        {"$set": {"rating_avg": round(new_avg, 2), "rating_count": new_count}},
     )
     rating_doc.pop("_id", None)
     return rating_doc
@@ -643,7 +665,7 @@ async def barber_profile(barber_id: str):
     b = await db.users.find_one({"id": barber_id, "role": "barber"}, {"_id": 0, "password": 0, "wallet_balance": 0})
     if not b:
         raise HTTPException(status_code=404, detail="الحلاق غير موجود")
-    ratings = await db.ratings.find({"barber_id": barber_id}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    ratings = await db.ratings.find({"barber_id": barber_id}, {"_id": 0}).sort("created_at", -1).limit(20).to_list(20)
     return {"barber": b, "ratings": ratings}
 
 
