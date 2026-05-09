@@ -139,3 +139,78 @@ html, body {
 /* Hide arrow on number inputs */
 input[type="number"]::-webkit-outer-spin-button,
 input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+
+/* =============================================================
+   LIGHT THEME OVERRIDE — white backgrounds while keeping gold
+   accent colors. Activated globally without touching JSX files.
+   ============================================================= */
+html, body { background: #FFFFFF !important; color: #1a1a1a !important; }
+.App { background: #FFFFFF !important; }
+
+/* Dark surfaces → light surfaces */
+.bg-\[\#050505\] { background-color: #FFFFFF !important; }
+.bg-\[\#0a0a0a\] { background-color: #F8F8F8 !important; }
+.bg-\[\#121212\] { background-color: #F5F5F5 !important; }
+.bg-\[\#1a1a1a\] { background-color: #EFEFEF !important; }
+
+/* Translucent darks → translucent lights */
+.bg-black\/20 { background-color: rgba(0,0,0,0.03) !important; }
+.bg-black\/30 { background-color: rgba(0,0,0,0.04) !important; }
+.bg-black\/40 { background-color: rgba(0,0,0,0.05) !important; }
+.bg-black\/50 { background-color: rgba(0,0,0,0.06) !important; }
+
+/* Text inversion */
+.text-white { color: #1a1a1a !important; }
+.text-zinc-200 { color: #1a1a1a !important; }
+.text-zinc-300 { color: #2a2a2a !important; }
+.text-zinc-400 { color: #555555 !important; }
+.text-zinc-500 { color: #777777 !important; }
+.text-zinc-600 { color: #888888 !important; }
+
+/* Borders inversion */
+.border-white\/5  { border-color: rgba(0,0,0,0.06) !important; }
+.border-white\/10 { border-color: rgba(0,0,0,0.10) !important; }
+
+/* Inputs / placeholders */
+input, textarea, select { color: #1a1a1a !important; }
+input::placeholder, textarea::placeholder { color: #999 !important; }
+.placeholder\:text-zinc-500::placeholder { color: #999 !important; }
+
+/* Glass (used in bottom nav + auth card) — semi-transparent white */
+.glass { background: rgba(255,255,255,0.85) !important; border: 1px solid rgba(0,0,0,0.08) !important; }
+
+/* Status / role badges keep their tinted bg but use stronger text on white */
+.bg-yellow-500\/20 { background-color: rgba(234,179,8,0.18) !important; }
+.bg-emerald-500\/15 { background-color: rgba(16,185,129,0.15) !important; }
+.bg-emerald-500\/20 { background-color: rgba(16,185,129,0.18) !important; }
+.bg-blue-500\/15 { background-color: rgba(59,130,246,0.15) !important; }
+.bg-blue-500\/20 { background-color: rgba(59,130,246,0.18) !important; }
+.bg-red-500\/10  { background-color: rgba(239,68,68,0.10) !important; }
+.bg-red-500\/15  { background-color: rgba(239,68,68,0.15) !important; }
+.bg-red-500\/20  { background-color: rgba(239,68,68,0.18) !important; }
+
+/* Gold tints on white look better slightly stronger */
+.bg-\[\#D4AF37\]\/10 { background-color: rgba(212,175,55,0.16) !important; }
+.bg-\[\#D4AF37\]\/15 { background-color: rgba(212,175,55,0.20) !important; }
+.bg-\[\#D4AF37\]\/20 { background-color: rgba(212,175,55,0.25) !important; }
+
+/* Splash + Auth backdrops were dark gradients — soften to neutral light */
+.fixed.inset-0[class*="bg-[#050505]"] { background: #FFFFFF !important; }
+
+/* Leaflet popup back to light */
+.leaflet-container { background: #EFEFEF !important; }
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background: #FFFFFF !important; color: #1a1a1a !important;
+  border: 1px solid rgba(212,175,55,0.4) !important;
+}
+.leaflet-control-attribution { background: rgba(255,255,255,0.85) !important; color: #555 !important; }
+
+/* Toast theme: light */
+[data-sonner-toaster] { --normal-bg: #FFFFFF !important; --normal-text: #1a1a1a !important; }
+
+/* Some scrollable areas had black bg */
+.bg-\[\#0a0a0a\].border { border-color: rgba(0,0,0,0.08) !important; }
+
+/* Hover states on dark were white/5 — make subtle gray on light */
+.hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.04) !important; }
