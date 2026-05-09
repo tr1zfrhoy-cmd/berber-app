@@ -110,6 +110,15 @@ export default function CustomerHome() {
           onClose={() => setRateBooking(null)}
           onRated={() => { setRated({ ...rated, [rateBooking.id]: true }); load(); }} />
       )}
+
+      {/* Footer legal links */}
+      <div className="pt-4 pb-2 flex items-center justify-center gap-4 text-xs text-zinc-500">
+        <button data-testid="home-link-privacy" onClick={() => navigate("/app/privacy")}
+          className="hover:text-[#D4AF37] transition">سياسة الخصوصية</button>
+        <span className="text-zinc-700">·</span>
+        <button data-testid="home-link-terms" onClick={() => navigate("/app/terms")}
+          className="hover:text-[#D4AF37] transition">الشروط والأحكام</button>
+      </div>
     </div>
   );
 }

@@ -20,6 +20,8 @@ import AdminUsers from "./pages/AdminUsers";
 import AdminUserDetail from "./pages/AdminUserDetail";
 import AdminBookings from "./pages/AdminBookings";
 import AdminSettings from "./pages/AdminSettings";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import Terms from "./pages/Terms";
 
 const RoleHome = () => {
   const { user } = useAuth();
@@ -45,6 +47,8 @@ const Protected = () => {
         <Route path="users/:id" element={<AdminUserDetail />} />
         <Route path="bookings" element={<AdminBookings />} />
         <Route path="admin-settings" element={<AdminSettings />} />
+        <Route path="privacy" element={<PrivacyPolicy />} />
+        <Route path="terms" element={<Terms />} />
       </Routes>
     </Layout>
   );

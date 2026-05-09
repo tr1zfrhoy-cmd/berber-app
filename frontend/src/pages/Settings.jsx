@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { LogOut, User, Phone, Save, MapPin, Edit3, Shield, Image, Plus, Trash2, Camera } from "lucide-react";
+import { LogOut, User, Phone, Save, MapPin, Edit3, Shield, Image, Plus, Trash2, Camera, FileText, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { supportWhatsappUrl } from "../lib/support";
@@ -140,6 +140,24 @@ export default function Settings() {
         className="w-full py-3 rounded-2xl bg-red-500/10 border border-red-500/30 text-red-400 font-black flex items-center justify-center gap-2 hover:bg-red-500/20 transition">
         <LogOut className="w-4 h-4" /> تسجيل الخروج
       </button>
+
+      {/* Legal links */}
+      <div className="rounded-2xl bg-[#121212] border border-white/5 divide-y divide-white/5">
+        <button data-testid="link-privacy" onClick={() => navigate("/app/privacy")}
+          className="w-full flex items-center justify-between py-3.5 px-4 hover:bg-white/5 transition">
+          <span className="flex items-center gap-3 text-sm font-bold">
+            <Shield className="w-4 h-4 text-[#D4AF37]" /> سياسة الخصوصية
+          </span>
+          <ChevronLeft className="w-4 h-4 text-zinc-500" />
+        </button>
+        <button data-testid="link-terms" onClick={() => navigate("/app/terms")}
+          className="w-full flex items-center justify-between py-3.5 px-4 hover:bg-white/5 transition">
+          <span className="flex items-center gap-3 text-sm font-bold">
+            <FileText className="w-4 h-4 text-[#D4AF37]" /> الشروط والأحكام
+          </span>
+          <ChevronLeft className="w-4 h-4 text-zinc-500" />
+        </button>
+      </div>
 
       <div className="text-center text-zinc-600 text-xs py-4">
         Berber · v2.0 · 2026
