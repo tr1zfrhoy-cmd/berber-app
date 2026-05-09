@@ -8,6 +8,7 @@ import { supportWhatsappUrl } from "../lib/support";
 
 export default function Settings() {
   const { user, logout, updateProfile } = useAuth();
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     name: user?.name || "",
     phone: user?.phone || "",
