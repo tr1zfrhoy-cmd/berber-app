@@ -382,7 +382,11 @@ async def list_bookings(user: dict = Depends(get_current_user)):
     if user["role"] == "customer":
         q = {"customer_id": user["id"]}
     elif user["role"] == "barber":
-        q = {"$or": [{"barber_id": user["id"]}, {"barber_id": None, "status": "pending"}]}
+        # If barber is offline, only show their already-claimed bookings (no new pending).
+        if user.get("is_online", True):
+            q = {"$or": [{"barber_id": user["id"]}, {"barber_id": None, "status": "pending"}]}
+        else:
+            q = {"barber_id": user["id"]}
     else:
         q = {}
     items = await db.bookings.find(q, {"_id": 0}).sort("created_at", -1).limit(100).to_list(100)

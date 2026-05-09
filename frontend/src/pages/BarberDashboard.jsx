@@ -7,8 +7,34 @@ import { StatusBadge } from "./CustomerHome";
 import { errMsg } from "../lib/errors";
 import { supportWhatsappUrl } from "../lib/support";
 
-// Tiny notification ping (base64-encoded short beep WAV)
-const PING_URL = "data:audio/wav;base64,UklGRkZIAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YSJIAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIB/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3p6enp6enp6enp6enp6enp6enp5eXl5eXl5eXl5eXl5eXl4eHh4eHh4eHh4eHh4eHd3d3d3d3d3d3d3d3Z2dnZ2dnZ2dnZ2dXV1dXV1dXV1dXR0dHR0dHR0dHRzc3Nzc3Nzc3JycnJycnJycXFxcXFxcXBwcHBwcHBwb29vb29vb25ubm5ubm5tbW1tbW1tbGxsbGxsbGtra2trampqampqaWlpaWlpaGhoaGhoZ2dnZ2dnZmZmZmZlZWVlZWVkZGRkZGRjY2NjY2NiYmJiYmFhYWFhYWBgYGBgX19fX19fXl5eXl5dXV1dXV1cXFxcXFtbW1tbWlpaWlpaWVlZWVlZWFhYWFhYV1dXV1dXVlZWVlZWVVVVVVVVVFRUVFRUU1NTU1NTUlJSUlJSUVFRUVFRUFBQUFBQT09PT09PTk5OTk5OTU1NTU1NTU1NTU1NTU1NTU1NTU1NTk5OTk5OT09PT09PUFBQUFBQUVFRUVFRUlJSUlJSU1NTU1NTVFRUVFRUVVVVVVVVVlZWVlZWV1dXV1dXWFhYWFhYWVlZWVlZWlpaWlpaW1tbW1tbXFxcXFxcXV1dXV1dXl5eXl5eX19fX19fYGBgYGBgYWFhYWFhYmJiYmJiY2NjY2NjZGRkZGRkZWVlZWVlZmZmZmZmZ2dnZ2dnaGhoaGhoaWlpaWlpampqampqa2tra2trbGxsbGxsbW1tbW1tbm5ubm5ub29vb29vcHBwcHBwcXFxcXFxcnJycnJyc3Nzc3NzdHR0dHR0dXV1dXV1dnZ2dnZ2d3d3d3d3eHh4eHh4eXl5eXl5enp6enp6e3t7e3t7fHx8fHx8fX19fX19fn5+fn5+f39/f39/gICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIB/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/f39/fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fn5+fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx7e3t7e3t7e3t7e3t7e3t7e3t7e3t7e3p6enp6enp6enp6enp6enp6enp5eXl5eXl5eXl5eXl5eXl4eHh4eHh4eHh4eHh4eHd3d3d3d3d3d3d3d3Z2dnZ2dnZ2dnZ2dXV1dXV1dXV1dXR0dHR0dHR0dHRzc3Nzc3Nzc3JycnJycnJycXFxcXFxcXBwcHBwcHBwb29vb29vb25ubm5ubm5tbW1tbW1tbGxsbGxsbGtra2trampqampqaWlpaWlpaGhoaGhoZ2dnZ2dnZmZmZmZlZWVlZWVkZGRkZGRjY2NjY2NiYmJiYmFhYWFhYWBgYGBgX19fX19fXl5eXl5dXV1dXV1cXFxcXFtbW1tbWlpaWlpaWVlZWVlZWFhYWFhYV1dXV1dXVlZWVlZWVVVVVVVVVFRUVFRUU1NTU1NTUlJSUlJSUVFRUVFRUFBQUFBQT09PT09PTk5OTk5OTU1NTU1NTU1NTU1NTU1NTU1NTU1N";
+// Pleasant 3-tone notification chime via Web Audio API (no asset needed).
+function playChime() {
+  try {
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    const ctx = new Ctx();
+    const notes = [
+      { f: 880, t: 0.0, d: 0.18 },   // A5
+      { f: 1175, t: 0.18, d: 0.18 }, // D6
+      { f: 1568, t: 0.36, d: 0.30 }, // G6
+    ];
+    notes.forEach((n) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = n.f;
+      const start = ctx.currentTime + n.t;
+      const end = start + n.d;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.4, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, end);
+      osc.connect(gain).connect(ctx.destination);
+      osc.start(start);
+      osc.stop(end + 0.05);
+    });
+    setTimeout(() => ctx.close().catch(() => {}), 1200);
+  } catch {}
+}
 
 export default function BarberDashboard() {
   const { user, updateProfile } = useAuth();
@@ -39,6 +65,7 @@ export default function BarberDashboard() {
   };
 
   const fireNotification = (b) => {
+    playChime();
     try { audioRef.current?.play().catch(() => {}); } catch {}
     toast.success(`طلب جديد · ${b.service_name} · ${fmtIQD(b.price)}`, { duration: 6000 });
     if ("Notification" in window && Notification.permission === "granted") {
@@ -57,6 +84,8 @@ export default function BarberDashboard() {
   };
 
   const enablePush = async () => {
+    // Trigger a sample chime — also primes the AudioContext on user gesture
+    playChime();
     if (!("Notification" in window)) return toast.error("الإشعارات غير مدعومة");
     const perm = await Notification.requestPermission();
     if (perm === "granted") {
@@ -95,7 +124,7 @@ export default function BarberDashboard() {
 
   return (
     <div className="px-5 pt-6 space-y-5" data-testid="barber-dashboard">
-      <audio ref={audioRef} src={PING_URL} preload="auto" />
+      <audio ref={audioRef} preload="auto" />
 
       <header className="flex items-center justify-between">
         <div>
