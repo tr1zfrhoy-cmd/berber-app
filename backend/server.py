@@ -20,12 +20,12 @@ mongo_url = os.environ['MONGO_URL']
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
-JWT_SECRET = os.environ.get('JWT_SECRET', 'halaq-delivery-super-secret-key-2026')
+JWT_SECRET = os.environ['JWT_SECRET']
 JWT_ALG = 'HS256'
 DEFAULT_PLATFORM_FEE = 500  # IQD per accepted job (default, overridable via /api/admin/settings)
-ADMIN_PHONE = "07812059874"
-ADMIN_EMAIL = "tr1zfrhoy@gmail.com"
-SUPPORT_WHATSAPP = "9647812059874"
+ADMIN_PHONE = os.environ.get('ADMIN_PHONE', '07812059874')
+ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'tr1zfrhoy@gmail.com')
+SUPPORT_WHATSAPP = os.environ.get('SUPPORT_WHATSAPP', '9647812059874')
 
 DEFAULT_SERVICES = [
     {"key": "full", "name_ar": "حلاقة كاملة", "price": 10000, "icon": "Scissors", "active": True},
