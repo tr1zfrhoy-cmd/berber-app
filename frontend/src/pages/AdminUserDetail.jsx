@@ -1,18 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, fmtIQD } from "../lib/api";
-import { ChevronLeft, Phone, MapPin, Wallet as WalletIcon, Plus, Minus, Star } from "lucide-react";
+import { ChevronLeft, Phone, MapPin, Wallet as WalletIcon, Plus, Minus, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { errMsg } from "../lib/errors";
 import { StatusBadge } from "./CustomerHome";
+import { useAuth } from "../context/AuthContext";
 
 export default function AdminUserDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user: me } = useAuth();
   const [data, setData] = useState(null);
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const load = async () => {
     try {
@@ -37,15 +40,53 @@ export default function AdminUserDetail() {
 
   if (!data) return <div className="px-5 pt-10 text-center text-zinc-500">...</div>;
   const { user, bookings, txns } = data;
+  const canDelete = user.role !== "admin" && user.id !== me?.id;
+
+  const handleDelete = async () => {
+    setBusy(true);
+    try {
+      await api.delete(`/admin/users/${user.id}`);
+      toast.success(`تم حذف ${user.name} نهائياً`);
+      navigate("/app/users", { replace: true });
+    } catch (e) { toast.error(errMsg(e)); }
+    finally { setBusy(false); }
+  };
 
   return (
     <div className="px-5 pt-6 space-y-5" data-testid="admin-user-detail">
-      <div className="flex items-center gap-3">
-        <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-xl bg-[#121212] border border-white/10 flex items-center justify-center">
-          <ChevronLeft className="w-5 h-5 rotate-180" />
-        </button>
-        <h1 className="text-xl font-black">{user.name}</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-xl bg-[#121212] border border-white/10 flex items-center justify-center">
+            <ChevronLeft className="w-5 h-5 rotate-180" />
+          </button>
+          <h1 className="text-xl font-black">{user.name}</h1>
+        </div>
+        {canDelete && (
+          <button data-testid="detail-delete-btn"
+            onClick={() => setConfirmDelete(true)}
+            className="px-3 py-2 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-xs flex items-center gap-1.5 hover:bg-red-500/20 transition">
+            <Trash2 className="w-3.5 h-3.5" /> حذف
+          </button>
+        )}
       </div>
+
+      {confirmDelete && (
+        <div className="rounded-2xl bg-red-500/10 border border-red-500/30 p-4 space-y-3" data-testid="detail-confirm-delete">
+          <div className="text-sm font-bold text-red-400">
+            تأكيد حذف <span className="font-black">{user.name}</span> نهائياً؟ سيتم حذف كل الحجوزات والمحفظة والمحادثات والتقييمات المرتبطة به ولا يمكن التراجع.
+          </div>
+          <div className="flex gap-2">
+            <button data-testid="detail-confirm-yes" onClick={handleDelete} disabled={busy}
+              className="flex-1 py-2.5 rounded-xl bg-red-500 text-black font-black text-sm disabled:opacity-50">
+              {busy ? "جاري الحذف..." : "نعم، احذف نهائياً"}
+            </button>
+            <button onClick={() => setConfirmDelete(false)}
+              className="flex-1 py-2.5 rounded-xl bg-zinc-800 text-zinc-200 font-bold text-sm">
+              إلغاء
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Profile header */}
       <div className="rounded-3xl p-5 gold-border bg-[#121212] flex items-center gap-4">

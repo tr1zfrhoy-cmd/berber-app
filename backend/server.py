@@ -598,6 +598,40 @@ async def admin_get_user(user_id: str, user: dict = Depends(require_role("admin"
     return {"user": u, "bookings": bookings, "txns": txns}
 
 
+@api_router.delete("/admin/users/{user_id}")
+async def admin_delete_user(user_id: str, user: dict = Depends(require_role("admin"))):
+    """Permanently delete a user (customer or barber) and their related records.
+    Admin cannot delete themselves. Admin accounts cannot be deleted via this endpoint."""
+    target = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    if target["id"] == user["id"]:
+        raise HTTPException(status_code=400, detail="لا يمكن حذف حسابك")
+    if target.get("role") == "admin":
+        raise HTTPException(status_code=400, detail="لا يمكن حذف حساب مدير")
+
+    # Delete the user
+    await db.users.delete_one({"id": user_id})
+    # Cleanup related data so DB stays consistent
+    deleted_bookings = await db.bookings.delete_many({"$or": [{"customer_id": user_id}, {"barber_id": user_id}]})
+    deleted_txns = await db.wallet_txns.delete_many({"user_id": user_id})
+    deleted_chat = await db.chat_messages.delete_many({"user_id": user_id})
+    deleted_ratings = await db.ratings.delete_many({"$or": [{"customer_id": user_id}, {"barber_id": user_id}]})
+    return {
+        "deleted": True,
+        "user_id": user_id,
+        "name": target["name"],
+        "removed": {
+            "bookings": deleted_bookings.deleted_count,
+            "wallet_txns": deleted_txns.deleted_count,
+            "chat_messages": deleted_chat.deleted_count,
+            "ratings": deleted_ratings.deleted_count,
+        },
+    }
+
+
+
+
 @api_router.post("/admin/users/{user_id}/wallet")
 async def admin_topup_wallet(user_id: str, payload: WalletTopupIn, user: dict = Depends(require_role("admin"))):
     target = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
