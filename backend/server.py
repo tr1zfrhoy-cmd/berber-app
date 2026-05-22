@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, Header, UploadFile, File, Response, Query
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -11,6 +11,8 @@ from pydantic import BaseModel, Field, ConfigDict, EmailStr
 from typing import List, Optional, Literal
 import uuid
 from datetime import datetime, timezone, timedelta
+
+from storage import put_image, get_image, init_storage as _init_storage
 
 
 ROOT_DIR = Path(__file__).parent
@@ -326,13 +328,16 @@ async def update_me(payload: UpdateProfileIn, user: dict = Depends(get_current_u
         if clash:
             raise HTTPException(status_code=400, detail="رقم الهاتف مستخدم مسبقا")
         update["phone"] = normalized
-    # Basic URL sanitization for avatar / portfolio
-    if "avatar" in update and update["avatar"] and not update["avatar"].startswith(("http://", "https://")):
+    # Accept full URLs or internal storage paths (e.g., "/api/files/berber/...")
+    def _ok(u: str) -> bool:
+        return isinstance(u, str) and (u.startswith(("http://", "https://", "/api/files/")) or u == "")
+
+    if "avatar" in update and update["avatar"] and not _ok(update["avatar"]):
         raise HTTPException(status_code=400, detail="رابط صورة غير صالح")
     if "portfolio" in update and update["portfolio"]:
         for u in update["portfolio"]:
-            if not isinstance(u, str) or not u.startswith(("http://", "https://")):
-                raise HTTPException(status_code=400, detail="روابط المعرض يجب أن تبدأ بـ http(s)")
+            if not _ok(u):
+                raise HTTPException(status_code=400, detail="رابط صورة غير صالح في المعرض")
     if update:
         await db.users.update_one({"id": user["id"]}, {"$set": update})
     fresh = await db.users.find_one({"id": user["id"]}, {"_id": 0, "password": 0})
@@ -707,6 +712,51 @@ async def barber_profile(barber_id: str):
     return {"barber": b, "ratings": ratings}
 
 
+# ---------- File Upload (avatars + portfolio images) ----------
+@api_router.post("/upload")
+async def upload_file(file: UploadFile = File(...), kind: str = "img", user: dict = Depends(get_current_user)):
+    """Upload an image. Returns {"url": "/api/files/<path>", "path": "..."}."""
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="نوع الملف يجب أن يكون صورة")
+    ext = "jpg"
+    if file.filename and "." in file.filename:
+        ext = file.filename.rsplit(".", 1)[-1].lower()
+    data = await file.read()
+    if len(data) > 6 * 1024 * 1024:
+        raise HTTPException(status_code=400, detail="حجم الصورة كبير (الحد 6MB)")
+    kind = "avatar" if kind == "avatar" else "portfolio" if kind == "portfolio" else "img"
+    try:
+        result = put_image(user["id"], data, ext, kind=kind)
+    except Exception as e:
+        logger.error(f"Upload failed: {e}")
+        raise HTTPException(status_code=500, detail="فشل رفع الصورة، حاول مجدداً")
+    # Record file in DB as soft-deletable reference
+    await db.files.insert_one({
+        "id": str(uuid.uuid4()),
+        "user_id": user["id"],
+        "storage_path": result["path"],
+        "content_type": result.get("content_type"),
+        "size": result.get("size", len(data)),
+        "kind": kind,
+        "is_deleted": False,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    })
+    return {"url": f"/api/files/{result['path']}", "path": result["path"], "size": result.get("size")}
+
+
+@api_router.get("/files/{path:path}")
+async def serve_file(path: str):
+    """Public file proxy — images can be loaded via plain <img src>. Path includes app prefix."""
+    rec = await db.files.find_one({"storage_path": path, "is_deleted": False}, {"_id": 0})
+    try:
+        data, ctype = get_image(path)
+    except Exception as e:
+        raise HTTPException(status_code=404, detail="الصورة غير موجودة")
+    media_type = rec.get("content_type") if rec else ctype
+    return Response(content=data, media_type=media_type or "image/jpeg",
+                    headers={"Cache-Control": "public, max-age=86400"})
+
+
 # Include the router in the main app
 app.include_router(api_router)
 
@@ -728,3 +778,12 @@ logger = logging.getLogger(__name__)
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+
+@app.on_event("startup")
+async def startup_init_storage():
+    try:
+        _init_storage()
+        logger.info("Object storage ready")
+    except Exception as e:
+        logger.warning(f"Storage init deferred: {e}")

@@ -22,6 +22,7 @@ import AdminBookings from "./pages/AdminBookings";
 import AdminSettings from "./pages/AdminSettings";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
+import BarberWorks from "./pages/BarberWorks";
 
 const RoleHome = () => {
   const { user } = useAuth();
@@ -49,6 +50,7 @@ const Protected = () => {
         <Route path="admin-settings" element={<AdminSettings />} />
         <Route path="privacy" element={<PrivacyPolicy />} />
         <Route path="terms" element={<Terms />} />
+        <Route path="works" element={<BarberWorks />} />
       </Routes>
     </Layout>
   );

@@ -1,13 +1,13 @@
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Home, Map, Wallet, MessageCircle, Settings, LayoutDashboard, Users, ClipboardList } from "lucide-react";
+import { Home, Map, Wallet, MessageCircle, Settings, LayoutDashboard, Users, ClipboardList, Scissors } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 
 const customerTabs = [
   { to: "/app", icon: Home, label: "الرئيسية", end: true },
+  { to: "/app/works", icon: Scissors, label: "أعمال الحلاقين" },
   { to: "/app/map", icon: Map, label: "الخريطة" },
   { to: "/app/wallet", icon: Wallet, label: "المحفظة" },
-  { to: "/app/chat", icon: MessageCircle, label: "الدعم" },
   { to: "/app/settings", icon: Settings, label: "الإعدادات" },
 ];
 const barberTabs = [
