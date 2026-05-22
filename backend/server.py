@@ -195,6 +195,39 @@ class RatingIn(BaseModel):
     comment: Optional[str] = None
 
 
+class ChangePasswordIn(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class AdminSetPasswordIn(BaseModel):
+    new_password: str
+
+
+class CreateReportIn(BaseModel):
+    barber_id: str
+    image_url: str
+    reason: Optional[str] = None
+
+
+class UpdateReportIn(BaseModel):
+    status: Literal["pending", "reviewed", "dismissed"]
+
+
+class Report(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    barber_id: str
+    barber_name: Optional[str] = None
+    image_url: str
+    reporter_id: str
+    reporter_name: str
+    reporter_role: Role
+    reason: Optional[str] = None
+    status: Literal["pending", "reviewed", "dismissed"] = "pending"
+    created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+
+
 class WalletTxn(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
@@ -314,6 +347,30 @@ async def login(payload: LoginIn):
 @api_router.get("/auth/me")
 async def me(user: dict = Depends(get_current_user)):
     return user
+
+
+@api_router.post("/auth/change-password")
+async def change_password(payload: ChangePasswordIn, user: dict = Depends(get_current_user)):
+    """User updates their own password. Requires the current password."""
+    if not payload.new_password or len(payload.new_password) < 4:
+        raise HTTPException(status_code=400, detail="كلمة المرور الجديدة قصيرة جداً (4 أحرف على الأقل)")
+    doc = await db.users.find_one({"id": user["id"]})
+    if not doc or not verify_pw(payload.current_password, doc.get("password", "")):
+        raise HTTPException(status_code=401, detail="كلمة المرور الحالية غير صحيحة")
+    await db.users.update_one({"id": user["id"]}, {"$set": {"password": hash_pw(payload.new_password)}})
+    return {"ok": True}
+
+
+@api_router.post("/admin/users/{user_id}/password")
+async def admin_reset_password(user_id: str, payload: AdminSetPasswordIn, user: dict = Depends(require_role("admin"))):
+    """Admin resets any user's password without needing the current one."""
+    if not payload.new_password or len(payload.new_password) < 4:
+        raise HTTPException(status_code=400, detail="كلمة المرور قصيرة جداً (4 أحرف على الأقل)")
+    target = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="المستخدم غير موجود")
+    await db.users.update_one({"id": user_id}, {"$set": {"password": hash_pw(payload.new_password)}})
+    return {"ok": True, "user_id": user_id, "name": target.get("name")}
 
 
 @api_router.patch("/auth/me")
@@ -710,6 +767,48 @@ async def barber_profile(barber_id: str):
         raise HTTPException(status_code=404, detail="الحلاق غير موجود")
     ratings = await db.ratings.find({"barber_id": barber_id}, {"_id": 0}).sort("created_at", -1).limit(20).to_list(20)
     return {"barber": b, "ratings": ratings}
+
+
+# ---------- Reports (content moderation for Barber Works feed) ----------
+@api_router.post("/reports")
+async def create_report(payload: CreateReportIn, user: dict = Depends(get_current_user)):
+    """Any authenticated user (customer/barber) can flag an image in the feed."""
+    barber = await db.users.find_one({"id": payload.barber_id, "role": "barber"}, {"_id": 0, "password": 0})
+    if not barber:
+        raise HTTPException(status_code=404, detail="الحلاق غير موجود")
+    if not payload.image_url:
+        raise HTTPException(status_code=400, detail="رابط الصورة مطلوب")
+    report = Report(
+        barber_id=payload.barber_id,
+        barber_name=barber.get("name"),
+        image_url=payload.image_url,
+        reporter_id=user["id"],
+        reporter_name=user["name"],
+        reporter_role=user["role"],
+        reason=(payload.reason or "").strip() or None,
+    )
+    await db.reports.insert_one(report.model_dump())
+    return report.model_dump()
+
+
+@api_router.get("/admin/reports")
+async def admin_list_reports(status: Optional[str] = None, user: dict = Depends(require_role("admin"))):
+    q = {}
+    if status in ("pending", "reviewed", "dismissed"):
+        q["status"] = status
+    items = await db.reports.find(q, {"_id": 0}).sort("created_at", -1).limit(300).to_list(300)
+    pending_count = await db.reports.count_documents({"status": "pending"})
+    return {"items": items, "pending": pending_count}
+
+
+@api_router.patch("/admin/reports/{report_id}")
+async def admin_update_report(report_id: str, payload: UpdateReportIn, user: dict = Depends(require_role("admin"))):
+    rep = await db.reports.find_one({"id": report_id}, {"_id": 0})
+    if not rep:
+        raise HTTPException(status_code=404, detail="البلاغ غير موجود")
+    await db.reports.update_one({"id": report_id}, {"$set": {"status": payload.status}})
+    fresh = await db.reports.find_one({"id": report_id}, {"_id": 0})
+    return fresh
 
 
 # ---------- File Upload (avatars + portfolio images) ----------

@@ -1,10 +1,12 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { LogOut, User, Phone, Save, MapPin, Edit3, Shield, Image, Plus, Trash2, Camera, FileText, ChevronLeft } from "lucide-react";
+import { LogOut, User, Phone, Save, MapPin, Edit3, Shield, Image, Plus, Trash2, Camera, FileText, ChevronLeft, KeyRound, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import { api } from "../lib/api";
 import { supportWhatsappUrl } from "../lib/support";
+import { errMsg } from "../lib/errors";
 import { AvatarUpload, GalleryUpload } from "../components/ImageUpload";
 
 export default function Settings() {
@@ -19,6 +21,24 @@ export default function Settings() {
   const [portfolio, setPortfolio] = useState(user?.portfolio || []);
   const [newPic, setNewPic] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // Password change state (separate from profile form, no side-effects elsewhere)
+  const [pw, setPw] = useState({ current: "", next: "", confirm: "" });
+  const [showPw, setShowPw] = useState(false);
+  const [pwBusy, setPwBusy] = useState(false);
+
+  const changePassword = async () => {
+    if (!pw.current || !pw.next) return toast.error("املأ كلمة المرور الحالية والجديدة");
+    if (pw.next.length < 4) return toast.error("كلمة المرور الجديدة قصيرة جداً");
+    if (pw.next !== pw.confirm) return toast.error("كلمة المرور وتأكيدها غير متطابقتين");
+    setPwBusy(true);
+    try {
+      await api.post("/auth/change-password", { current_password: pw.current, new_password: pw.next });
+      toast.success("تم تحديث كلمة المرور");
+      setPw({ current: "", next: "", confirm: "" });
+    } catch (e) { toast.error(errMsg(e)); }
+    finally { setPwBusy(false); }
+  };
 
   const save = async () => {
     setBusy(true);
@@ -104,6 +124,34 @@ export default function Settings() {
         </div>
       )}
 
+      {/* Change password */}
+      <div className="rounded-3xl p-5 bg-[#121212] border border-white/5" data-testid="change-password-card">
+        <h3 className="text-sm font-bold mb-1 flex items-center gap-2">
+          <KeyRound className="w-4 h-4 text-[#D4AF37]" /> كلمة المرور
+        </h3>
+        <p className="text-xs text-zinc-500 mb-3">حدّث كلمة المرور بشكل آمن. لا يتم عرض كلمة المرور القديمة لأسباب أمنية.</p>
+        <div className="space-y-2">
+          <PwField icon={<KeyRound className="w-4 h-4" />} value={pw.current} type={showPw ? "text" : "password"}
+            placeholder="كلمة المرور الحالية" testid="pw-current"
+            onChange={(v) => setPw({ ...pw, current: v })} />
+          <PwField icon={<KeyRound className="w-4 h-4" />} value={pw.next} type={showPw ? "text" : "password"}
+            placeholder="كلمة المرور الجديدة (4 أحرف على الأقل)" testid="pw-new"
+            onChange={(v) => setPw({ ...pw, next: v })} />
+          <PwField icon={<KeyRound className="w-4 h-4" />} value={pw.confirm} type={showPw ? "text" : "password"}
+            placeholder="تأكيد كلمة المرور الجديدة" testid="pw-confirm"
+            onChange={(v) => setPw({ ...pw, confirm: v })} />
+          <button type="button" data-testid="pw-toggle-visibility" onClick={() => setShowPw((v) => !v)}
+            className="text-xs text-zinc-400 flex items-center gap-1.5 hover:text-[#D4AF37] transition">
+            {showPw ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+            {showPw ? "إخفاء كلمات المرور" : "عرض كلمات المرور"}
+          </button>
+          <button data-testid="change-password-btn" disabled={pwBusy} onClick={changePassword}
+            className="w-full py-3 rounded-2xl bg-[#D4AF37]/15 border border-[#D4AF37]/40 text-[#D4AF37] font-black flex items-center justify-center gap-2 hover:bg-[#D4AF37]/25 transition disabled:opacity-50">
+            <Save className="w-4 h-4" /> {pwBusy ? "جاري الحفظ..." : "تحديث كلمة المرور"}
+          </button>
+        </div>
+      </div>
+
       <div className="rounded-3xl p-5 bg-[#121212] border border-white/5 space-y-2">
         <button data-testid="update-location-btn" onClick={updateLocation}
           className="w-full flex items-center justify-between py-3 px-2 hover:bg-white/5 rounded-xl transition">
@@ -152,6 +200,15 @@ const Field = ({ icon, value, onChange, placeholder, testid }) => (
   <div className="flex items-center bg-black/40 border border-white/10 rounded-2xl px-4 py-3 focus-within:border-[#D4AF37] transition">
     <span className="text-zinc-500 ml-2">{icon}</span>
     <input data-testid={testid} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+      className="bg-transparent flex-1 outline-none text-white placeholder:text-zinc-500 text-sm" />
+  </div>
+);
+
+const PwField = ({ icon, value, onChange, placeholder, testid, type = "password" }) => (
+  <div className="flex items-center bg-black/40 border border-white/10 rounded-2xl px-4 py-3 focus-within:border-[#D4AF37] transition">
+    <span className="text-zinc-500 ml-2">{icon}</span>
+    <input data-testid={testid} type={type} value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+      autoComplete="new-password"
       className="bg-transparent flex-1 outline-none text-white placeholder:text-zinc-500 text-sm" />
   </div>
 );

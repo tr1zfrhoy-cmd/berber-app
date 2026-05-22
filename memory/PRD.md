@@ -47,6 +47,18 @@
 - [x] **PWA**: manifest.json, service worker, new scissors icon.svg
 - [x] **Privacy / No-Index**: robots.txt + meta noindex,nofollow,noarchive
 - [x] **Capacitor config** + `/app/PUBLISHING.md` for store publishing
+- [x] **Barber Works social feed** (grouped per barber, horizontal carousel, full-screen lightbox preview)
+- [x] **Direct image uploads** (avatar + portfolio) via Emergent Object Storage; gallery access enabled on mobile
+- [x] **Admin delete user** (with cascade cleanup of bookings/wallet/chat/ratings; admins protected)
+- [x] **Password management** (2026-02-22):
+  - Signup screen already collects password
+  - Settings: user changes own password (current + new + confirm, with show/hide toggle)
+  - Admin: `POST /api/admin/users/{id}/password` to reset any user's password from the user detail page
+- [x] **Content moderation** (2026-02-22):
+  - Customers can flag any image in Barber Works feed (Flag icon overlay + reason modal)
+  - New `reports` collection + `POST /api/reports`, `GET/PATCH /api/admin/reports`
+  - Admin Dashboard shows pending count badge + dedicated `/app/reports` page with filters and status actions
+  - Each report links back to the barber's user-detail page (uses existing admin delete)
 
 ## Test Status
 - Backend pytest: **21/21 passing** (iteration 3)

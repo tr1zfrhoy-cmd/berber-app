@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, fmtIQD } from "../lib/api";
-import { ChevronLeft, Phone, MapPin, Wallet as WalletIcon, Plus, Minus, Star, Trash2 } from "lucide-react";
+import { ChevronLeft, Phone, MapPin, Wallet as WalletIcon, Plus, Minus, Star, Trash2, KeyRound, Save } from "lucide-react";
 import { toast } from "sonner";
 import { errMsg } from "../lib/errors";
 import { StatusBadge } from "./CustomerHome";
@@ -16,6 +16,19 @@ export default function AdminUserDetail() {
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [newPw, setNewPw] = useState("");
+  const [pwBusy, setPwBusy] = useState(false);
+
+  const resetPassword = async () => {
+    if (!newPw || newPw.length < 4) return toast.error("كلمة المرور قصيرة جداً (4 أحرف على الأقل)");
+    setPwBusy(true);
+    try {
+      await api.post(`/admin/users/${id}/password`, { new_password: newPw });
+      toast.success(`تم تعيين كلمة مرور جديدة لـ ${data?.user?.name}`);
+      setNewPw("");
+    } catch (e) { toast.error(errMsg(e)); }
+    finally { setPwBusy(false); }
+  };
 
   const load = async () => {
     try {
@@ -116,6 +129,26 @@ export default function AdminUserDetail() {
               <Star className="w-3 h-3 fill-[#D4AF37]" /> {user.rating_avg?.toFixed(1)} ({user.rating_count} تقييم)
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Admin password reset (any user) */}
+      <div className="rounded-3xl p-5 bg-[#121212] border border-white/5" data-testid="admin-pw-reset-card">
+        <h3 className="text-sm font-bold mb-1 flex items-center gap-2">
+          <KeyRound className="w-4 h-4 text-[#D4AF37]" /> إعادة تعيين كلمة المرور
+        </h3>
+        <p className="text-xs text-zinc-500 mb-3">
+          عيّن كلمة مرور جديدة لـ <span className="font-bold text-zinc-300">{user.name}</span>. ستعمل فوراً عند تسجيل الدخول.
+        </p>
+        <div className="flex gap-2">
+          <input data-testid="admin-pw-input"
+            type="text" value={newPw} onChange={(e) => setNewPw(e.target.value)}
+            placeholder="كلمة المرور الجديدة"
+            className="flex-1 bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none text-sm" />
+          <button data-testid="admin-pw-reset-btn" disabled={pwBusy} onClick={resetPassword}
+            className="px-4 rounded-xl bg-[#D4AF37] text-black font-black text-sm flex items-center gap-1 disabled:opacity-50">
+            <Save className="w-4 h-4" /> {pwBusy ? "..." : "حفظ"}
+          </button>
         </div>
       </div>
 

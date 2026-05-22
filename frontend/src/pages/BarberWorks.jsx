@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../lib/api";
-import { Heart, Star, Scissors, BadgeCheck, X, ChevronLeft, ChevronRight } from "lucide-react";
+import { Heart, Star, Scissors, BadgeCheck, X, ChevronLeft, ChevronRight, Flag } from "lucide-react";
+import { toast } from "sonner";
+import { errMsg } from "../lib/errors";
 
 /**
  * Social feed of barber works.
@@ -15,6 +17,10 @@ export default function BarberWorks() {
   const [barbers, setBarbers] = useState([]);
   const [likes, setLikes] = useState({});
   const [preview, setPreview] = useState(null); // { images: [], index: 0 }
+  const [reportTarget, setReportTarget] = useState(null); // { barber_id, image_url, barber_name }
+  const [reportReason, setReportReason] = useState("");
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportedKeys, setReportedKeys] = useState({}); // local feedback only
 
   useEffect(() => {
     api.get("/barbers").then((r) => setBarbers(r.data || []));
@@ -26,6 +32,27 @@ export default function BarberWorks() {
   const closePreview = () => setPreview(null);
   const nextImg = () => setPreview((p) => p && ({ ...p, index: (p.index + 1) % p.images.length }));
   const prevImg = () => setPreview((p) => p && ({ ...p, index: (p.index - 1 + p.images.length) % p.images.length }));
+
+  const openReport = (barber, imageUrl) => {
+    setReportReason("");
+    setReportTarget({ barber_id: barber.id, image_url: imageUrl, barber_name: barber.name });
+  };
+  const closeReport = () => { setReportTarget(null); setReportReason(""); };
+  const submitReport = async () => {
+    if (!reportTarget) return;
+    setReportBusy(true);
+    try {
+      await api.post("/reports", {
+        barber_id: reportTarget.barber_id,
+        image_url: reportTarget.image_url,
+        reason: reportReason.trim() || null,
+      });
+      toast.success("تم إرسال البلاغ للإدارة");
+      setReportedKeys((s) => ({ ...s, [`${reportTarget.barber_id}|${reportTarget.image_url}`]: true }));
+      closeReport();
+    } catch (e) { toast.error(errMsg(e)); }
+    finally { setReportBusy(false); }
+  };
 
   return (
     <div className="px-3 pt-4 pb-6 space-y-4" data-testid="barber-works-page">
@@ -88,18 +115,37 @@ export default function BarberWorks() {
                   data-testid={`carousel-${b.id}`}
                   className="flex overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
                 >
-                  {images.map((url, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => openPreview(images, i)}
-                      data-testid={`work-image-${b.id}-${i}`}
-                      className="relative shrink-0 w-full snap-center aspect-square bg-black/40 focus:outline-none"
-                    >
-                      <img src={url} alt="" loading="lazy"
-                        className="absolute inset-0 w-full h-full object-cover" />
-                    </button>
-                  ))}
+                  {images.map((url, i) => {
+                    const reportedKey = `${b.id}|${url}`;
+                    const wasReported = !!reportedKeys[reportedKey];
+                    return (
+                      <div key={i} className="relative shrink-0 w-full snap-center aspect-square">
+                        <button
+                          type="button"
+                          onClick={() => openPreview(images, i)}
+                          data-testid={`work-image-${b.id}-${i}`}
+                          className="absolute inset-0 w-full h-full bg-black/40 focus:outline-none"
+                        >
+                          <img src={url} alt="" loading="lazy"
+                            className="absolute inset-0 w-full h-full object-cover" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openReport(b, url); }}
+                          data-testid={`report-image-${b.id}-${i}`}
+                          aria-label="إبلاغ"
+                          title={wasReported ? "تم الإبلاغ" : "الإبلاغ عن هذه الصورة"}
+                          className={`absolute top-2 left-2 w-9 h-9 rounded-full backdrop-blur-md border flex items-center justify-center transition ${
+                            wasReported
+                              ? "bg-red-500/30 border-red-500/50 text-red-200"
+                              : "bg-black/55 border-white/15 text-white hover:bg-red-500/80 hover:border-red-400"
+                          }`}
+                        >
+                          <Flag className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="aspect-square w-full bg-black/40 relative">
@@ -187,6 +233,56 @@ export default function BarberWorks() {
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Report image modal */}
+      {reportTarget && (
+        <div
+          data-testid="report-modal"
+          className="fixed inset-0 z-[210] bg-black/85 flex items-center justify-center p-4"
+          onClick={closeReport}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-[#121212] border border-red-500/30 p-5 space-y-3"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 text-red-400">
+              <Flag className="w-5 h-5" />
+              <h3 className="text-lg font-black">الإبلاغ عن صورة</h3>
+            </div>
+            <p className="text-xs text-zinc-400">
+              سيتم إرسال هذا البلاغ مباشرة إلى الإدارة لمراجعة صورة الحلاق
+              <span className="font-bold text-zinc-200"> {reportTarget.barber_name}</span>.
+            </p>
+            <img src={reportTarget.image_url} alt=""
+              className="w-full aspect-video object-cover rounded-xl border border-white/10" />
+            <textarea
+              data-testid="report-reason-input"
+              value={reportReason}
+              onChange={(e) => setReportReason(e.target.value)}
+              placeholder="سبب البلاغ (اختياري): محتوى غير لائق، صورة مسروقة، إعلان مضلل..."
+              rows={3}
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-3 py-2.5 outline-none text-sm placeholder:text-zinc-500 resize-none"
+            />
+            <div className="flex gap-2">
+              <button
+                data-testid="report-submit-btn"
+                disabled={reportBusy}
+                onClick={submitReport}
+                className="flex-1 py-3 rounded-xl bg-red-500 text-black font-black text-sm disabled:opacity-50"
+              >
+                {reportBusy ? "جاري الإرسال..." : "إرسال البلاغ"}
+              </button>
+              <button
+                data-testid="report-cancel-btn"
+                onClick={closeReport}
+                className="flex-1 py-3 rounded-xl bg-zinc-800 text-zinc-200 font-bold text-sm"
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

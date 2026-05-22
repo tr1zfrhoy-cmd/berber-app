@@ -2,18 +2,20 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { api, fmtIQD } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
-import { Users, Scissors, ClipboardList, TrendingUp, LogOut, Percent, Settings as SettingsIcon } from "lucide-react";
+import { Users, Scissors, ClipboardList, TrendingUp, LogOut, Percent, Settings as SettingsIcon, Flag } from "lucide-react";
 import { toast } from "sonner";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
   const [fee, setFee] = useState(null);
+  const [pendingReports, setPendingReports] = useState(0);
   const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
     api.get("/admin/stats").then((r) => setStats(r.data));
     api.get("/admin/settings").then((r) => setFee(r.data?.platform_fee));
+    api.get("/admin/reports?status=pending").then((r) => setPendingReports(r.data?.pending || 0)).catch(() => {});
   }, []);
 
   const doLogout = () => {
@@ -55,6 +57,22 @@ export default function AdminDashboard() {
         </div>
       </Link>
 
+      <Link to="/app/reports" data-testid="reports-card"
+        className="block rounded-2xl p-4 bg-[#121212] border border-red-500/30 hover:border-red-500/60 transition">
+        <div className="flex items-center gap-3">
+          <div className="w-11 h-11 rounded-xl bg-red-500/15 border border-red-500/30 flex items-center justify-center">
+            <Flag className="w-5 h-5 text-red-400" />
+          </div>
+          <div className="flex-1">
+            <div className="text-xs text-zinc-400">بلاغات أعمال الحلاقين</div>
+            <div className="text-2xl font-black text-red-400">
+              {pendingReports} <span className="text-xs font-bold text-zinc-400">قيد المراجعة</span>
+            </div>
+          </div>
+          <ChevronArrow />
+        </div>
+      </Link>
+
       <div className="grid grid-cols-2 gap-3">
         <Stat icon={<Users className="w-5 h-5" />} label="المستخدمون" value={stats.users} />
         <Stat icon={<Scissors className="w-5 h-5" />} label="الحلاقون" value={stats.barbers} />
@@ -86,4 +104,8 @@ const Row = ({ k, v, gold }) => (
     <span className="text-zinc-400">{k}</span>
     <span className={gold ? "gold-text font-black" : "font-bold"}>{v}</span>
   </div>
+);
+
+const ChevronArrow = () => (
+  <span className="text-xs text-red-400 font-bold">عرض ‹</span>
 );
