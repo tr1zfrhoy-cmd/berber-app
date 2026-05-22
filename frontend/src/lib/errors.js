@@ -9,3 +9,11 @@ export function errMsg(err, fallback = "حدث خطأ، حاول مرة أخرى
   if (d && typeof d === "object") return d.msg || fallback;
   return err?.message || fallback;
 }
+
+// Dev-only diagnostic logger. Stripped from production console.
+export function logErr(label, err) {
+  if (process.env.NODE_ENV !== "production") {
+    // eslint-disable-next-line no-console
+    console.error(label, err);
+  }
+}

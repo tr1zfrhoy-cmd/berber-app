@@ -5,7 +5,7 @@ import { useLocation } from "react-router-dom";
 import { Send, MessageCircle, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { supportWhatsappUrl } from "../lib/support";
-import { errMsg } from "../lib/errors";
+import { errMsg, logErr } from "../lib/errors";
 
 export default function Chat() {
   const { user } = useAuth();
@@ -27,7 +27,7 @@ export default function Chat() {
         setMessages(data || []);
       }
     } catch (e) {
-      console.error("Failed to load chat messages:", e);
+      logErr("Failed to load chat messages:", e);
     }
   }, [isAdmin]);
 

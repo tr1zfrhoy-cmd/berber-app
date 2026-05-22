@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { Scissors, User, Phone, KeyRound, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
-import { errMsg } from "../lib/errors";
+import { errMsg, logErr } from "../lib/errors";
 
 export default function Auth() {
   const { login, register } = useAuth();
@@ -29,7 +29,7 @@ export default function Auth() {
             setTimeout(res, 4000);
           });
         } catch (geoErr) {
-          console.error("Geolocation failed:", geoErr);
+          logErr("Geolocation failed:", geoErr);
         }
         await register({ name: form.name, phone: form.phone.trim(), password: form.password, role, lat, lng });
         toast.success("تم إنشاء الحساب!");

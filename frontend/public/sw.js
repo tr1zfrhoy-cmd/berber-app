@@ -1,6 +1,6 @@
 // Service Worker for Berber PWA
 // Bumping CACHE version invalidates all old caches on next load.
-const CACHE = "berber-v14";
+const CACHE = "berber-v15";
 
 self.addEventListener("install", (e) => {
   // Activate this SW immediately, skipping waiting state.

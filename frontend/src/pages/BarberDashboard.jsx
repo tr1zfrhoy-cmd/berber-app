@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { Check, X, MapPin, Phone, Clock, PowerOff, Power, Bell, BellOff, Navigation, Wallet, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
 import { StatusBadge } from "./CustomerHome";
-import { errMsg } from "../lib/errors";
+import { errMsg, logErr } from "../lib/errors";
 import { supportWhatsappUrl } from "../lib/support";
 
 // Pleasant 3-tone notification chime via Web Audio API (no asset needed).
@@ -34,7 +34,10 @@ function playChime() {
     });
     setTimeout(() => ctx.close().catch(() => {}), 1200);
   } catch (e) {
-    console.error("playChime failed:", e);
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.error("playChime failed:", e);
+    }
   }
 }
 
@@ -64,13 +67,13 @@ export default function BarberDashboard() {
       firstLoadRef.current = false;
       setBookings(items);
     } catch (e) {
-      console.error("Failed to load bookings:", e);
+      logErr("Failed to load bookings:", e);
     }
   }, [user?.id]);
 
   const fireNotification = (b) => {
     playChime();
-    try { audioRef.current?.play().catch(() => {}); } catch (e) { console.error("audio play failed:", e); }
+    try { audioRef.current?.play().catch(() => {}); } catch (e) { logErr("audio play failed:", e); }
     toast.success(`طلب جديد · ${b.service_name} · ${fmtIQD(b.price)}`, { duration: 6000 });
     if ("Notification" in window && Notification.permission === "granted") {
       try {
@@ -84,7 +87,7 @@ export default function BarberDashboard() {
         });
         n.onclick = () => { window.focus(); n.close(); };
       } catch (e) {
-        console.error("Notification failed:", e);
+        logErr("Notification failed:", e);
       }
     }
   };
