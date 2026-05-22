@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { api } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { useLocation } from "react-router-dom";
@@ -17,22 +17,25 @@ export default function Chat() {
   const [text, setText] = useState("");
   const scrollRef = useRef();
 
-  const load = async () => {
-    const { data } = await api.get("/chat/messages");
-    if (isAdmin) {
-      setThreads(data || []);
-      if (!activeUserId && data && data.length) setActiveUserId(data[0].user_id);
-    } else {
-      setMessages(data || []);
+  const load = useCallback(async () => {
+    try {
+      const { data } = await api.get("/chat/messages");
+      if (isAdmin) {
+        setThreads(data || []);
+        setActiveUserId((cur) => (cur || (data && data.length ? data[0].user_id : null)));
+      } else {
+        setMessages(data || []);
+      }
+    } catch (e) {
+      console.error("Failed to load chat messages:", e);
     }
-  };
+  }, [isAdmin]);
 
   useEffect(() => {
     load();
     const t = setInterval(load, 5000);
     return () => clearInterval(t);
-    // eslint-disable-next-line
-  }, []);
+  }, [load]);
 
   useEffect(() => {
     if (isAdmin && activeUserId) {

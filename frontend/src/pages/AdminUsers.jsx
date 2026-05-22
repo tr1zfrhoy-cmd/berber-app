@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { api, fmtIQD } from "../lib/api";
 import { Search, Wallet as WalletIcon, Star, Scissors, Trash2 } from "lucide-react";
@@ -14,8 +14,8 @@ export default function AdminUsers() {
   const [busyId, setBusyId] = useState(null);
   const { user: me } = useAuth();
 
-  const load = () => api.get("/admin/users").then((r) => setUsers(r.data || []));
-  useEffect(() => { load(); }, []);
+  const load = useCallback(() => api.get("/admin/users").then((r) => setUsers(r.data || [])), []);
+  useEffect(() => { load(); }, [load]);
 
   const filtered = users.filter((u) => {
     if (filter !== "all" && u.role !== filter) return false;

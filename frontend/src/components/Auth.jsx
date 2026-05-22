@@ -28,7 +28,9 @@ export default function Auth() {
             );
             setTimeout(res, 4000);
           });
-        } catch {}
+        } catch (geoErr) {
+          console.error("Geolocation failed:", geoErr);
+        }
         await register({ name: form.name, phone: form.phone.trim(), password: form.password, role, lat, lng });
         toast.success("تم إنشاء الحساب!");
       }

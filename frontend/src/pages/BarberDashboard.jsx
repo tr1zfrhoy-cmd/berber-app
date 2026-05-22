@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import { api, fmtIQD } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { Check, X, MapPin, Phone, Clock, PowerOff, Power, Bell, BellOff, Navigation, Wallet, MessageCircle } from "lucide-react";
@@ -33,7 +33,9 @@ function playChime() {
       osc.stop(end + 0.05);
     });
     setTimeout(() => ctx.close().catch(() => {}), 1200);
-  } catch {}
+  } catch (e) {
+    console.error("playChime failed:", e);
+  }
 }
 
 export default function BarberDashboard() {
@@ -45,7 +47,7 @@ export default function BarberDashboard() {
   const knownIdsRef = useRef(new Set());
   const firstLoadRef = useRef(true);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const { data } = await api.get("/bookings");
       const items = data || [];
@@ -61,12 +63,14 @@ export default function BarberDashboard() {
       knownIdsRef.current = new Set(pendings.map((b) => b.id));
       firstLoadRef.current = false;
       setBookings(items);
-    } catch {}
-  };
+    } catch (e) {
+      console.error("Failed to load bookings:", e);
+    }
+  }, [user?.id]);
 
   const fireNotification = (b) => {
     playChime();
-    try { audioRef.current?.play().catch(() => {}); } catch {}
+    try { audioRef.current?.play().catch(() => {}); } catch (e) { console.error("audio play failed:", e); }
     toast.success(`طلب جديد · ${b.service_name} · ${fmtIQD(b.price)}`, { duration: 6000 });
     if ("Notification" in window && Notification.permission === "granted") {
       try {
@@ -79,7 +83,9 @@ export default function BarberDashboard() {
           lang: "ar",
         });
         n.onclick = () => { window.focus(); n.close(); };
-      } catch {}
+      } catch (e) {
+        console.error("Notification failed:", e);
+      }
     }
   };
 
@@ -101,8 +107,7 @@ export default function BarberDashboard() {
     load();
     const t = setInterval(load, 6000);
     return () => clearInterval(t);
-    // eslint-disable-next-line
-  }, []);
+  }, [load]);
 
   const update = async (id, status) => {
     try {

@@ -119,7 +119,7 @@ export default function BarberWorks() {
                     const reportedKey = `${b.id}|${url}`;
                     const wasReported = !!reportedKeys[reportedKey];
                     return (
-                      <div key={i} className="relative shrink-0 w-full snap-center aspect-square">
+                      <div key={reportedKey} className="relative shrink-0 w-full snap-center aspect-square">
                         <button
                           type="button"
                           onClick={() => openPreview(images, i)}

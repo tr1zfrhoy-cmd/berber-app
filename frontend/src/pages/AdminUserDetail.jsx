@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, fmtIQD } from "../lib/api";
 import { ChevronLeft, Phone, MapPin, Wallet as WalletIcon, Plus, Minus, Star, Trash2, KeyRound, Save } from "lucide-react";
@@ -30,13 +30,13 @@ export default function AdminUserDetail() {
     finally { setPwBusy(false); }
   };
 
-  const load = async () => {
+  const load = useCallback(async () => {
     try {
       const { data } = await api.get(`/admin/users/${id}`);
       setData(data);
     } catch (e) { toast.error(errMsg(e)); }
-  };
-  useEffect(() => { load(); }, [id]);
+  }, [id]);
+  useEffect(() => { load(); }, [load]);
 
   const topup = async (sign) => {
     const n = parseInt(amount);
@@ -212,7 +212,7 @@ export default function AdminUserDetail() {
           <h3 className="text-sm font-bold text-zinc-400 mb-2">معرض الأعمال</h3>
           <div className="grid grid-cols-3 gap-2">
             {user.portfolio.map((url, i) => (
-              <img key={i} src={url} alt="" className="aspect-square object-cover rounded-xl border border-white/10" />
+              <img key={url || i} src={url} alt="" className="aspect-square object-cover rounded-xl border border-white/10" />
             ))}
           </div>
         </div>

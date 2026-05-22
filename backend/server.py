@@ -849,7 +849,8 @@ async def serve_file(path: str):
     rec = await db.files.find_one({"storage_path": path, "is_deleted": False}, {"_id": 0})
     try:
         data, ctype = get_image(path)
-    except Exception as e:
+    except Exception as exc:
+        logger.warning(f"File not found {path}: {exc}")
         raise HTTPException(status_code=404, detail="الصورة غير موجودة")
     media_type = rec.get("content_type") if rec else ctype
     return Response(content=data, media_type=media_type or "image/jpeg",

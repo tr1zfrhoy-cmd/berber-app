@@ -99,7 +99,7 @@ export function GalleryUpload({ value = [], onChange, max = 10, testid }) {
     <div>
       <div className="grid grid-cols-3 gap-2 mb-3">
         {value.map((url, i) => (
-          <div key={i} className="relative group aspect-square">
+          <div key={url || i} className="relative group aspect-square">
             <img src={url} alt="" className="w-full h-full object-cover rounded-xl border border-white/10" />
             <button onClick={() => remove(i)}
               data-testid={`gallery-remove-${i}`}
