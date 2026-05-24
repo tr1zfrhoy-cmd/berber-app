@@ -241,3 +241,13 @@ input, textarea, [contenteditable="true"], [contenteditable=""] {
   -webkit-touch-callout: default;
 }
 
+/* Images: kill the native browser long-press menu (save/copy/preview).
+   This makes <img> feel like a part of a native app. */
+img {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+

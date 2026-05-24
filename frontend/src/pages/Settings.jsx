@@ -8,6 +8,7 @@ import { api } from "../lib/api";
 import { supportWhatsappUrl } from "../lib/support";
 import { errMsg } from "../lib/errors";
 import { AvatarUpload, GalleryUpload } from "../components/ImageUpload";
+import Avatar from "../components/Avatar";
 
 export default function Settings() {
   const { user, logout, updateProfile } = useAuth();
@@ -74,13 +75,7 @@ export default function Settings() {
 
       <div className="rounded-3xl p-6 gold-border bg-[#121212]">
         <div className="flex items-center gap-4 mb-5">
-          {form.avatar ? (
-            <img src={form.avatar} alt="" className="w-16 h-16 rounded-2xl object-cover border border-[#D4AF37]/40" />
-          ) : (
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#8B6914] flex items-center justify-center text-black font-black text-2xl">
-              {user?.name?.[0]}
-            </div>
-          )}
+          <Avatar src={form.avatar} name={user?.name} size="lg" testid="settings-profile-avatar" />
           <div>
             <div className="font-black text-lg">{user?.name}</div>
             <div className="text-xs text-zinc-500" dir="ltr">{user?.phone}</div>

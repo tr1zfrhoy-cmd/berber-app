@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { api, fmtIQD } from "../lib/api";
 import { useNavigate } from "react-router-dom";
 import RatingModal from "../components/RatingModal";
+import Avatar from "../components/Avatar";
 
 const ICON = { Scissors, Baby, User: UserIcon, Wind, Sparkles, Flame };
 
@@ -32,9 +33,7 @@ export default function CustomerHome() {
           <p className="text-zinc-400 text-sm">أهلاً وسهلاً</p>
           <h1 className="text-3xl font-black mt-1">{user?.name} <span className="gold-text">·</span></h1>
         </div>
-        <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#D4AF37] to-[#8B6914] flex items-center justify-center text-black font-black text-lg">
-          {user?.name?.[0]}
-        </div>
+        <Avatar src={user?.avatar} name={user?.name} size="md" testid="home-avatar" />
       </header>
 
       <div className="relative rounded-3xl overflow-hidden gold-border slide-up" style={{ minHeight: 180 }}>
