@@ -4,7 +4,7 @@
 //   * API traffic: network-only (no caching)
 //   * Navigation: network-first, falls back to cached "/" when offline
 //   * Static assets (JS/CSS/img): stale-while-revalidate
-const CACHE = "berber-v16";
+const CACHE = "berber-v17";
 const APP_SHELL = [
   "/",
   "/manifest.json",

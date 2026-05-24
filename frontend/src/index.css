@@ -214,3 +214,30 @@ input::placeholder, textarea::placeholder { color: #999 !important; }
 
 /* Hover states on dark were white/5 — make subtle gray on light */
 .hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.04) !important; }
+
+/* =====================================================================
+   Native app polish (TWA / PWA installed mode)
+   ===================================================================== */
+
+/* 1. Disable pull-to-refresh + browser bounce on Y axis */
+html, body {
+  overscroll-behavior-y: contain;
+}
+
+/* 2. Disable text selection app-wide for a native feel */
+* {
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;          /* no long-press context menus */
+  -webkit-tap-highlight-color: transparent; /* no blue flash on tap */
+}
+
+/* Allow selection only inside input fields so users can still type & paste */
+input, textarea, [contenteditable="true"], [contenteditable=""] {
+  -webkit-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
