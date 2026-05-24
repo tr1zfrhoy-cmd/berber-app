@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "host.emergent.haircut_on_demand_2.twa",
+    "sha256_cert_fingerprints": ["4B:3C:59:38:28:28:BF:C2:37:EB:DD:A2:32:B2:1B:D3:3A:59:2F:C6:4B:19:92:28:FD:56:9C:6D:D3:91:EF:BA"]
+  }
+}]
