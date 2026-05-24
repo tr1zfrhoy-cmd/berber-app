@@ -70,6 +70,7 @@ class User(BaseModel):
     rating_avg: float = 0.0
     rating_count: int = 0
     is_online: bool = True
+    notifications_enabled: bool = False
     created_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
@@ -97,6 +98,7 @@ class UpdateProfileIn(BaseModel):
     lat: Optional[float] = None
     lng: Optional[float] = None
     is_online: Optional[bool] = None
+    notifications_enabled: Optional[bool] = None
 
 
 class Booking(BaseModel):

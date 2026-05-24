@@ -71,46 +71,90 @@ export default function BarberDashboard() {
     }
   }, [user?.id]);
 
-  const fireNotification = (b) => {
+  const fireNotification = async (b) => {
     playChime();
     try { audioRef.current?.play().catch(() => {}); } catch (e) { logErr("audio play failed:", e); }
     toast.success(`طلب جديد · ${b.service_name} · ${fmtIQD(b.price)}`, { duration: 6000 });
-    if ("Notification" in window && Notification.permission === "granted") {
-      try {
-        const n = new Notification("Berber · طلب حلاقة جديد", {
-          body: `${b.service_name} - ${b.address}\n${fmtIQD(b.price)}`,
-          icon: "/icon-192.png",
-          badge: "/icon-192.png",
-          tag: b.id,
-          dir: "rtl",
-          lang: "ar",
-        });
-        n.onclick = () => { window.focus(); n.close(); };
-      } catch (e) {
-        logErr("Notification failed:", e);
+    // Respect both the OS permission AND the user's DB-stored preference.
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    if (!user?.notifications_enabled) return;
+    const payload = {
+      body: `${b.service_name} - ${b.address}\n${fmtIQD(b.price)}`,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+      tag: b.id,
+      dir: "rtl",
+      lang: "ar",
+      requireInteraction: false,
+    };
+    try {
+      // Prefer the Service Worker registration: notifications hosted by the SW
+      // show the app name (no browser URL) and survive page navigations.
+      if ("serviceWorker" in navigator) {
+        const reg = await navigator.serviceWorker.ready;
+        await reg.showNotification("Berber · طلب حلاقة جديد", payload);
+        return;
       }
+      const n = new Notification("Berber · طلب حلاقة جديد", payload);
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch (e) {
+      logErr("Notification failed:", e);
     }
   };
 
-  const enablePush = async () => {
-    // Trigger a sample chime — also primes the AudioContext on user gesture
+  const togglePush = async () => {
+    if (!("Notification" in window)) return toast.error("الإشعارات غير مدعومة على هذا الجهاز");
+    // Prime audio context on the user gesture (autoplay policy)
     playChime();
-    if (!("Notification" in window)) return toast.error("الإشعارات غير مدعومة");
-    const perm = await Notification.requestPermission();
-    if (perm === "granted") {
+
+    // CASE A: currently ON → turn OFF (do not revoke OS permission — that's user's choice in settings)
+    if (pushEnabled) {
+      try {
+        await updateProfile({ notifications_enabled: false });
+        setPushEnabled(false);
+        toast.success("تم إيقاف التنبيهات");
+      } catch (e) { toast.error(errMsg(e, "فشل حفظ الحالة")); }
+      return;
+    }
+
+    // CASE B: permission previously denied → can't reprompt; guide user
+    if (Notification.permission === "denied") {
+      toast.error("الإشعارات محظورة. فعّلها من إعدادات التطبيق/المتصفح");
+      return;
+    }
+
+    // CASE C: permission default / granted → request via SW registration so the
+    // Android dialog shows the app name instead of the bare URL.
+    try {
+      if ("serviceWorker" in navigator) {
+        await navigator.serviceWorker.ready; // ensure SW is the active host
+      }
+      let perm = Notification.permission;
+      if (perm === "default") {
+        perm = await Notification.requestPermission();
+      }
+      if (perm !== "granted") {
+        toast.error("تم رفض الإشعارات");
+        return;
+      }
+      await updateProfile({ notifications_enabled: true });
       setPushEnabled(true);
-      toast.success("تم تفعيل الإشعارات");
-    } else {
-      toast.error("تم رفض الإشعارات");
+      toast.success("تم تفعيل التنبيهات");
+    } catch (e) {
+      logErr("Enable push failed:", e);
+      toast.error(errMsg(e, "فشل التفعيل"));
     }
   };
 
   useEffect(() => {
-    if ("Notification" in window) setPushEnabled(Notification.permission === "granted");
+    // Show as ON only when BOTH the OS permission and the DB-stored
+    // preference agree. Otherwise show as OFF.
+    const osGranted = "Notification" in window && Notification.permission === "granted";
+    setPushEnabled(osGranted && !!user?.notifications_enabled);
     load();
     const t = setInterval(load, 6000);
     return () => clearInterval(t);
-  }, [load]);
+  }, [load, user?.notifications_enabled]);
 
   const update = async (id, status) => {
     try {
@@ -140,9 +184,12 @@ export default function BarberDashboard() {
           <h1 className="text-2xl font-black">{user?.name}</h1>
         </div>
         <div className="flex items-center gap-2">
-        <button data-testid="enable-push-btn" onClick={enablePush}
+        <button data-testid="enable-push-btn" onClick={togglePush}
+            aria-pressed={pushEnabled}
             className={`px-3 py-2 rounded-full text-xs font-bold flex items-center gap-1.5 border transition ${
-              pushEnabled ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30" : "bg-[#D4AF37]/10 text-[#D4AF37] border-[#D4AF37]/30"
+              pushEnabled
+                ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/40"
+                : "bg-zinc-800 text-zinc-400 border-white/10 hover:bg-zinc-700"
             }`}>
             {pushEnabled ? <Bell className="w-3.5 h-3.5" /> : <BellOff className="w-3.5 h-3.5" />}
             {pushEnabled ? "تنبيه مفعّل" : "تفعيل التنبيه"}
