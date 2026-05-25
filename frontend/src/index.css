@@ -251,3 +251,17 @@ img {
   user-drag: none;
 }
 
+/* Links + buttons: kill Chrome's long-press context menu showing the URL
+   ("Copy link / Open in new tab / ..."). Use !important to win over any
+   library defaults (shadcn/radix). */
+a, button, select, input[type="button"], input[type="submit"], [role="button"], .nav-link {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  user-select: none !important;
+}
+
+/* Anchors are the main offender — strip the underline dialog completely */
+a {
+  -webkit-user-drag: none;
+  user-drag: none;
+}

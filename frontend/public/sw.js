@@ -1,12 +1,14 @@
-// Service Worker for Berber PWA — v16 (PWABuilder-ready)
+// Service Worker for Berber PWA — v20 (offline-ready)
 // Strategy:
-//   * App shell precached on install (offline fallback)
+//   * App shell + offline page precached on install
 //   * API traffic: network-only (no caching)
-//   * Navigation: network-first, falls back to cached "/" when offline
+//   * Navigation: network-first, falls back to offline.html when network fails
 //   * Static assets (JS/CSS/img): stale-while-revalidate
-const CACHE = "berber-v19";
+const CACHE = "berber-v20";
+const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   "/",
+  OFFLINE_URL,
   "/manifest.json",
   "/icon.svg",
   "/icons/icon-192.png",
@@ -40,17 +42,26 @@ self.addEventListener("fetch", (e) => {
   // Never touch API traffic
   if (url.pathname.startsWith("/api")) return;
 
-  // Navigations: network-first, offline → cached "/"
+  // Navigations: network-first, offline → cached "/" → offline.html
   if (req.mode === "navigate" || url.pathname.endsWith(".html")) {
-    e.respondWith(
-      fetch(req)
-        .then((res) => {
+    e.respondWith((async () => {
+      try {
+        const res = await fetch(req);
+        // Cache fresh root for next time
+        if (res && res.status === 200) {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put("/", copy)).catch(() => {});
-          return res;
-        })
-        .catch(() => caches.match("/").then((r) => r || caches.match(req)))
-    );
+        }
+        return res;
+      } catch {
+        // Offline: try cached root first (full SPA shell), else dedicated offline page
+        const cachedRoot = await caches.match("/");
+        if (cachedRoot) return cachedRoot;
+        const offline = await caches.match(OFFLINE_URL);
+        if (offline) return offline;
+        return new Response("Offline", { status: 503, statusText: "Offline" });
+      }
+    })());
     return;
   }
 

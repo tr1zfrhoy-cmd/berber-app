@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#050505" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>لا يوجد اتصال · Berber</title>
+  <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@600;700;900&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      margin: 0; padding: 0;
+      min-height: 100vh;
+      background: radial-gradient(ellipse at top, #1a1a1a 0%, #050505 65%);
+      color: #fff;
+      font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      direction: rtl;
+      overflow: hidden;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+    .wrap {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .ring {
+      position: relative;
+      width: 124px; height: 124px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(212,175,55,0.18), transparent 65%);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 28px;
+      animation: float 3.4s ease-in-out infinite;
+    }
+    .ring::before {
+      content: ""; position: absolute; inset: -6px;
+      border-radius: 50%;
+      border: 1px solid rgba(212,175,55,0.22);
+      animation: pulse 2.6s ease-in-out infinite;
+    }
+    .ring::after {
+      content: ""; position: absolute; inset: -22px;
+      border-radius: 50%;
+      border: 1px solid rgba(212,175,55,0.1);
+      animation: pulse 2.6s ease-in-out 0.5s infinite;
+    }
+    .ring svg { width: 64px; height: 64px; color: #D4AF37; }
+    @keyframes float { 0%,100% { transform: translateY(0);} 50% { transform: translateY(-6px);} }
+    @keyframes pulse {
+      0% { opacity: 0.7; transform: scale(0.96); }
+      100% { opacity: 0; transform: scale(1.15); }
+    }
+    h1 {
+      font-size: 26px; font-weight: 900;
+      margin: 0 0 12px; letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #F3E5AB, #D4AF37 50%, #8B6914);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    p {
+      margin: 0 0 28px;
+      color: #a1a1aa;
+      font-size: 15px;
+      line-height: 1.7;
+      max-width: 320px;
+    }
+    .btn {
+      appearance: none; border: none; cursor: pointer;
+      background: linear-gradient(135deg, #F3E5AB, #D4AF37 50%, #8B6914);
+      color: #0a0a0a;
+      font-family: inherit; font-weight: 900; font-size: 15px;
+      padding: 14px 36px; border-radius: 999px;
+      display: inline-flex; align-items: center; gap: 8px;
+      box-shadow: 0 8px 28px rgba(212,175,55,0.35);
+      transition: transform .15s ease, box-shadow .15s ease;
+    }
+    .btn:active { transform: scale(.97); box-shadow: 0 4px 14px rgba(212,175,55,0.25); }
+    .btn svg { width: 18px; height: 18px; }
+    .brand {
+      position: fixed; bottom: 24px; left: 0; right: 0;
+      text-align: center; font-size: 11px; color: #52525b;
+      letter-spacing: 1.5px;
+    }
+    .status {
+      margin-top: 16px;
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: #a1a1aa;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 6px 14px; border-radius: 999px;
+    }
+    .dot { width: 7px; height: 7px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 8px #ef4444; animation: blink 1.4s ease-in-out infinite; }
+    @keyframes blink { 50% { opacity: 0.3; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="ring" aria-hidden="true">
+      <!-- WiFi-off icon (lucide) -->
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 20h.01"/>
+        <path d="M8.5 16.43a5 5 0 0 1 7 0"/>
+        <path d="M2 8.82a15 15 0 0 1 4.17-2.65"/>
+        <path d="M10.66 5c4.01-.36 8.14.9 11.34 3.76"/>
+        <path d="M16.85 11.25a10 10 0 0 1 2.22 1.68"/>
+        <path d="m2 2 20 20"/>
+      </svg>
+    </div>
+    <h1>لا يوجد اتصال بالإنترنت</h1>
+    <p>يرجى التحقق من الشبكة وإعادة المحاولة. كل بياناتك محفوظة بأمان وستعود فور رجوع الاتصال 📡</p>
+    <button class="btn" onclick="retry()" data-testid="offline-retry-btn">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+           stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12a9 9 0 1 1-3.6-7.2"/>
+        <path d="M21 3v6h-6"/>
+      </svg>
+      إعادة المحاولة
+    </button>
+    <div class="status"><span class="dot"></span><span id="status-text">غير متصل</span></div>
+    <div class="brand">Berber · حلاق دلفري</div>
+  </div>
+
+  <script>
+    function retry() {
+      // Try to navigate to the app root; if still offline the SW will serve this page again.
+      window.location.replace("/");
+    }
+    // Auto-retry when the device comes back online.
+    window.addEventListener("online", () => {
+      document.getElementById("status-text").textContent = "تم الاتصال — جاري إعادة التحميل…";
+      setTimeout(retry, 600);
+    });
+  </script>
+</body>
+</html>
