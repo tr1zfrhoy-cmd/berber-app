@@ -265,3 +265,16 @@ a {
   -webkit-user-drag: none;
   user-drag: none;
 }
+
+/* Bottom-sheet slide-up animation (used by ImageActionSheet) */
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); opacity: 0.6; }
+  to   { transform: translateY(0);    opacity: 1;   }
+}
+.sheet-slide-up { animation: sheet-slide-up 0.22s cubic-bezier(0.22, 1, 0.36, 1); }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.fade-in { animation: fade-in 0.18s ease-out; }

@@ -4,6 +4,7 @@ import { api, fmtIQD } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { Users, Scissors, ClipboardList, TrendingUp, LogOut, Percent, Settings as SettingsIcon, Flag } from "lucide-react";
 import { toast } from "sonner";
+import Avatar from "../components/Avatar";
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState(null);
@@ -29,10 +30,13 @@ export default function AdminDashboard() {
   return (
     <div className="px-5 pt-6 space-y-5" data-testid="admin-dashboard">
       <header className="flex items-start justify-between">
-        <div>
-          <p className="text-zinc-400 text-sm">لوحة التحكم</p>
-          <h1 className="text-2xl font-black">إدارة منصة Berber</h1>
-          {user?.name && <p className="text-xs text-zinc-500 mt-1">المدير: {user.name}</p>}
+        <div className="flex items-center gap-3">
+          <Avatar src={user?.avatar} name={user?.name} size="md" testid="admin-header-avatar" />
+          <div>
+            <p className="text-zinc-400 text-sm">لوحة التحكم</p>
+            <h1 className="text-2xl font-black">إدارة منصة Berber</h1>
+            {user?.name && <p className="text-xs text-zinc-500 mt-1">المدير: {user.name}</p>}
+          </div>
         </div>
         <button data-testid="admin-logout-btn" onClick={doLogout}
           className="px-3 py-2 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 font-bold text-xs flex items-center gap-1.5 hover:bg-red-500/20 transition">

@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, fmtIQD } from "../lib/api";
 import { ChevronLeft, Phone, MapPin, Wallet as WalletIcon, Plus, Minus, Star, Trash2, KeyRound, Save } from "lucide-react";
+import SmartImage from "../components/SmartImage";
 import { toast } from "sonner";
 import { errMsg } from "../lib/errors";
 import { StatusBadge } from "./CustomerHome";
@@ -212,7 +213,10 @@ export default function AdminUserDetail() {
           <h3 className="text-sm font-bold text-zinc-400 mb-2">معرض الأعمال</h3>
           <div className="grid grid-cols-3 gap-2">
             {user.portfolio.map((url, i) => (
-              <img key={url || i} src={url} alt="" className="aspect-square object-cover rounded-xl border border-white/10" />
+              <SmartImage key={url || i} src={url} alt=""
+                filename={`${(user.name || "barber").replace(/\s+/g,"_")}-${i + 1}.jpg`}
+                testid={`portfolio-image-${i}`}
+                className="aspect-square w-full object-cover rounded-xl border border-white/10 cursor-zoom-in" />
             ))}
           </div>
         </div>

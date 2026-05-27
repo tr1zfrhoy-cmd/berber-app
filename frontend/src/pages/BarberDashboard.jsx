@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { StatusBadge } from "./CustomerHome";
 import { errMsg, logErr } from "../lib/errors";
 import { supportWhatsappUrl } from "../lib/support";
+import Avatar from "../components/Avatar";
 
 // Pleasant 3-tone notification chime via Web Audio API (no asset needed).
 function playChime() {
@@ -179,9 +180,12 @@ export default function BarberDashboard() {
       <audio ref={audioRef} preload="auto" />
 
       <header className="flex items-center justify-between">
-        <div>
-          <p className="text-zinc-400 text-sm">حسابك كحلاق</p>
-          <h1 className="text-2xl font-black">{user?.name}</h1>
+        <div className="flex items-center gap-3">
+          <Avatar src={user?.avatar} name={user?.name} size="md" testid="barber-header-avatar" />
+          <div>
+            <p className="text-zinc-400 text-sm">حسابك كحلاق</p>
+            <h1 className="text-2xl font-black">{user?.name}</h1>
+          </div>
         </div>
         <div className="flex items-center gap-2">
         <button data-testid="enable-push-btn" onClick={togglePush}

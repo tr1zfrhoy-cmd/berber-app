@@ -2,6 +2,7 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { Home, Map, Wallet, MessageCircle, Settings, LayoutDashboard, Users, ClipboardList, Scissors } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import OnlineBanner from "./OnlineBanner";
 
 const customerTabs = [
   { to: "/app", icon: Home, label: "الرئيسية", end: true },
@@ -31,6 +32,7 @@ export default function Layout({ children }) {
 
   return (
     <div className="min-h-screen bg-[#050505] grain">
+      <OnlineBanner />
       <div className="max-w-2xl mx-auto pb-24 relative">
         {children}
       </div>

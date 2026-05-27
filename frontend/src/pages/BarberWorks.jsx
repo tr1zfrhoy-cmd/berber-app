@@ -4,6 +4,62 @@ import { api } from "../lib/api";
 import { Heart, Star, Scissors, BadgeCheck, X, ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { errMsg } from "../lib/errors";
+import useLongPress from "../hooks/useLongPress";
+import ImageActionSheet from "../components/ImageActionSheet";
+import { downloadImage } from "../lib/download";
+
+/** Per-image carousel item: tap = open shared preview (with prev/next),
+ *  long-press = action sheet (Open • Download). */
+function CarouselImage({ url, barber, index, onOpen }) {
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+
+  const longPress = useLongPress(() => setSheetOpen(true), { delay: 450 });
+
+  const handleClick = (e) => {
+    longPress.onClick(e);
+    if (e.defaultPrevented) return;
+    onOpen();
+  };
+
+  const doDownload = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const ok = await downloadImage(url, `${(barber.name || "berber").replace(/\s+/g, "_")}-${index + 1}.jpg`);
+      if (ok) {
+        setDownloaded(true);
+        toast.success("تم حفظ الصورة في الجهاز");
+        setTimeout(() => { setSheetOpen(false); setDownloaded(false); }, 1200);
+      } else { setSheetOpen(false); }
+    } catch { toast.error("تعذّر تنزيل الصورة"); }
+    finally { setDownloading(false); }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        {...longPress}
+        onClick={handleClick}
+        onContextMenu={longPress.onContextMenu}
+        data-testid={`work-image-${barber.id}-${index}`}
+        className="absolute inset-0 w-full h-full bg-black/40 focus:outline-none"
+      >
+        <img src={url} alt="" loading="lazy"
+          className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+      </button>
+      <ImageActionSheet
+        open={sheetOpen} src={url}
+        onClose={() => setSheetOpen(false)}
+        onOpen={() => { setSheetOpen(false); onOpen(); }}
+        onDownload={doDownload}
+        downloading={downloading} downloaded={downloaded}
+      />
+    </>
+  );
+}
 
 /**
  * Social feed of barber works.
@@ -120,22 +176,17 @@ export default function BarberWorks() {
                     const wasReported = !!reportedKeys[reportedKey];
                     return (
                       <div key={reportedKey} className="relative shrink-0 w-full snap-center aspect-square">
-                        <button
-                          type="button"
-                          onClick={() => openPreview(images, i)}
-                          data-testid={`work-image-${b.id}-${i}`}
-                          className="absolute inset-0 w-full h-full bg-black/40 focus:outline-none"
-                        >
-                          <img src={url} alt="" loading="lazy"
-                            className="absolute inset-0 w-full h-full object-cover" />
-                        </button>
+                        <CarouselImage
+                          url={url} barber={b} index={i}
+                          onOpen={() => openPreview(images, i)}
+                        />
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); openReport(b, url); }}
                           data-testid={`report-image-${b.id}-${i}`}
                           aria-label="إبلاغ"
                           title={wasReported ? "تم الإبلاغ" : "الإبلاغ عن هذه الصورة"}
-                          className={`absolute top-2 left-2 w-9 h-9 rounded-full backdrop-blur-md border flex items-center justify-center transition ${
+                          className={`absolute top-2 left-2 w-9 h-9 rounded-full backdrop-blur-md border flex items-center justify-center transition z-10 ${
                             wasReported
                               ? "bg-red-500/30 border-red-500/50 text-red-200"
                               : "bg-black/55 border-white/15 text-white hover:bg-red-500/80 hover:border-red-400"

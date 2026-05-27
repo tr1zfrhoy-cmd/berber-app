@@ -1,5 +1,9 @@
 import React, { useState } from "react";
 import ImageLightbox from "./ImageLightbox";
+import ImageActionSheet from "./ImageActionSheet";
+import useLongPress from "../hooks/useLongPress";
+import { downloadImage } from "../lib/download";
+import { toast } from "sonner";
 
 /**
  * Profile avatar with letter-fallback. Tap to enlarge into a lightbox
@@ -15,6 +19,11 @@ import ImageLightbox from "./ImageLightbox";
  */
 export default function Avatar({ src, name, size = "md", className = "", testid, onClick }) {
   const [open, setOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+
+  const longPress = useLongPress(() => { if (src) setSheetOpen(true); }, { delay: 450 });
 
   const sizeCls = {
     sm: "w-9 h-9 text-sm rounded-xl",
@@ -23,9 +32,27 @@ export default function Avatar({ src, name, size = "md", className = "", testid,
     xl: "w-20 h-20 text-3xl rounded-2xl",
   }[size] || "w-12 h-12 text-lg rounded-2xl";
 
-  const handleClick = () => {
+  const handleClick = (e) => {
+    longPress.onClick(e);
+    if (e.defaultPrevented) return;
     if (onClick) return onClick();
     if (src) setOpen(true);
+  };
+
+  const doDownload = async () => {
+    if (downloading || !src) return;
+    setDownloading(true);
+    try {
+      const ok = await downloadImage(src, `${(name || "berber").replace(/\s+/g, "_")}.jpg`);
+      if (ok) {
+        setDownloaded(true);
+        toast.success("تم حفظ الصورة في الجهاز");
+        setTimeout(() => { setSheetOpen(false); setDownloaded(false); }, 1200);
+      } else {
+        setSheetOpen(false);
+      }
+    } catch { toast.error("تعذّر تنزيل الصورة"); }
+    finally { setDownloading(false); }
   };
 
   const letter = (name && name.trim()[0]) || "?";
@@ -36,6 +63,8 @@ export default function Avatar({ src, name, size = "md", className = "", testid,
         type="button"
         data-testid={testid || "avatar-btn"}
         onClick={handleClick}
+        {...(src ? longPress : {})}
+        onContextMenu={src ? longPress.onContextMenu : undefined}
         aria-label={src ? "عرض الصورة" : letter}
         className={`${sizeCls} ${className} overflow-hidden flex items-center justify-center font-black transition active:scale-95 ${
           src
@@ -57,6 +86,16 @@ export default function Avatar({ src, name, size = "md", className = "", testid,
 
       {open && src && (
         <ImageLightbox src={src} onClose={() => setOpen(false)} alt={name || ""} />
+      )}
+
+      {src && (
+        <ImageActionSheet
+          open={sheetOpen} src={src}
+          onClose={() => setSheetOpen(false)}
+          onOpen={() => { setSheetOpen(false); setOpen(true); }}
+          onDownload={doDownload}
+          downloading={downloading} downloaded={downloaded}
+        />
       )}
     </>
   );
