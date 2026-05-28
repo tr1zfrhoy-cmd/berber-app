@@ -4,62 +4,6 @@ import { api } from "../lib/api";
 import { Heart, Star, Scissors, BadgeCheck, X, ChevronLeft, ChevronRight, Flag } from "lucide-react";
 import { toast } from "sonner";
 import { errMsg } from "../lib/errors";
-import useLongPress from "../hooks/useLongPress";
-import ImageActionSheet from "../components/ImageActionSheet";
-import { downloadImage } from "../lib/download";
-
-/** Per-image carousel item: tap = open shared preview (with prev/next),
- *  long-press = action sheet (Open • Download). */
-function CarouselImage({ url, barber, index, onOpen }) {
-  const [sheetOpen, setSheetOpen] = useState(false);
-  const [downloading, setDownloading] = useState(false);
-  const [downloaded, setDownloaded] = useState(false);
-
-  const longPress = useLongPress(() => setSheetOpen(true), { delay: 450 });
-
-  const handleClick = (e) => {
-    longPress.onClick(e);
-    if (e.defaultPrevented) return;
-    onOpen();
-  };
-
-  const doDownload = async () => {
-    if (downloading) return;
-    setDownloading(true);
-    try {
-      const ok = await downloadImage(url, `${(barber.name || "berber").replace(/\s+/g, "_")}-${index + 1}.jpg`);
-      if (ok) {
-        setDownloaded(true);
-        toast.success("تم حفظ الصورة في الجهاز");
-        setTimeout(() => { setSheetOpen(false); setDownloaded(false); }, 1200);
-      } else { setSheetOpen(false); }
-    } catch { toast.error("تعذّر تنزيل الصورة"); }
-    finally { setDownloading(false); }
-  };
-
-  return (
-    <>
-      <button
-        type="button"
-        {...longPress}
-        onClick={handleClick}
-        onContextMenu={longPress.onContextMenu}
-        data-testid={`work-image-${barber.id}-${index}`}
-        className="absolute inset-0 w-full h-full bg-black/40 focus:outline-none"
-      >
-        <img src={url} alt="" loading="lazy"
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none" />
-      </button>
-      <ImageActionSheet
-        open={sheetOpen} src={url}
-        onClose={() => setSheetOpen(false)}
-        onOpen={() => { setSheetOpen(false); onOpen(); }}
-        onDownload={doDownload}
-        downloading={downloading} downloaded={downloaded}
-      />
-    </>
-  );
-}
 
 /**
  * Social feed of barber works.
@@ -176,10 +120,18 @@ export default function BarberWorks() {
                     const wasReported = !!reportedKeys[reportedKey];
                     return (
                       <div key={reportedKey} className="relative shrink-0 w-full snap-center aspect-square">
-                        <CarouselImage
-                          url={url} barber={b} index={i}
-                          onOpen={() => openPreview(images, i)}
-                        />
+                        <button
+                          type="button"
+                          onClick={() => openPreview(images, i)}
+                          onContextMenu={(e) => e.preventDefault()}
+                          data-testid={`work-image-${b.id}-${i}`}
+                          className="absolute inset-0 w-full h-full bg-black/40 focus:outline-none"
+                        >
+                          <img src={url} alt="" loading="lazy"
+                            draggable={false}
+                            onContextMenu={(e) => e.preventDefault()}
+                            className="absolute inset-0 w-full h-full object-cover pointer-events-none select-none" />
+                        </button>
                         <button
                           type="button"
                           onClick={(e) => { e.stopPropagation(); openReport(b, url); }}
@@ -243,9 +195,10 @@ export default function BarberWorks() {
           <button
             data-testid="close-preview-btn"
             onClick={(e) => { e.stopPropagation(); closePreview(); }}
-            className="absolute top-4 left-4 w-10 h-10 rounded-full bg-white/10 text-white flex items-center justify-center hover:bg-white/20"
+            aria-label="إغلاق"
+            className="absolute top-4 right-4 w-12 h-12 rounded-full bg-red-500 text-white flex items-center justify-center shadow-[0_0_0_4px_rgba(255,255,255,0.15),0_8px_24px_rgba(239,68,68,0.55)] hover:bg-red-600 active:scale-90 transition z-10"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6" strokeWidth={3} />
           </button>
 
           {preview.images.length > 1 && (
@@ -271,7 +224,9 @@ export default function BarberWorks() {
             src={preview.images[preview.index]}
             alt=""
             onClick={(e) => e.stopPropagation()}
-            className="max-w-[95vw] max-h-[90vh] object-contain select-none"
+            onContextMenu={(e) => e.preventDefault()}
+            draggable={false}
+            className="max-w-[95vw] max-h-[90vh] object-contain select-none pointer-events-none"
           />
 
           {preview.images.length > 1 && (
