@@ -35,7 +35,17 @@ const RoleHome = () => {
 const Protected = () => {
   const { user, loading } = useAuth();
   if (loading) return null;
-  if (!user) return <Navigate to="/auth" replace />;
+  // Allow guests to read legal pages from the auth-screen links.
+  // Everything else requires login.
+  if (!user) {
+    return (
+      <Routes>
+        <Route path="privacy" element={<PrivacyPolicy />} />
+        <Route path="terms" element={<Terms />} />
+        <Route path="*" element={<Navigate to="/auth" replace />} />
+      </Routes>
+    );
+  }
   return (
     <Layout>
       <Routes>

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Scissors, User, Phone, KeyRound, ChevronLeft } from "lucide-react";
 import { toast } from "sonner";
@@ -101,8 +102,23 @@ export default function Auth() {
             </form>
           </div>
 
-          <p className="text-center text-xs text-zinc-500 mt-6">
-            بإنشاء حسابك توافق على شروط الخدمة وسياسة الخصوصية
+          <p className="text-center text-xs text-zinc-500 mt-6 leading-6">
+            بتسجيل دخولك أو إنشاء حسابك توافق على{" "}
+            <Link
+              to="/app/terms"
+              data-testid="auth-terms-link"
+              className="text-[#D4AF37] font-bold underline underline-offset-2 decoration-[#D4AF37]/50 hover:text-[#F3E5AB] hover:decoration-[#D4AF37] transition"
+            >
+              الشروط والأحكام
+            </Link>
+            {" "}و{" "}
+            <Link
+              to="/app/privacy"
+              data-testid="auth-privacy-link"
+              className="text-[#D4AF37] font-bold underline underline-offset-2 decoration-[#D4AF37]/50 hover:text-[#F3E5AB] hover:decoration-[#D4AF37] transition"
+            >
+              سياسة الخصوصية
+            </Link>
           </p>
         </div>
       </div>
