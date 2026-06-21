@@ -1,10 +1,23 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, FileText } from "lucide-react";
+import { api } from "../lib/api";
+import Markdown from "../components/Markdown";
 
 export default function Terms() {
   const navigate = useNavigate();
   const today = new Date().toLocaleDateString("ar-IQ", { year: "numeric", month: "long", day: "numeric" });
+  const [text, setText] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.get("/legal/terms")
+      .then(({ data }) => { if (!cancelled) setText(data?.text || ""); })
+      .catch(() => { if (!cancelled) setText(""); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <div className="px-5 pt-6 pb-6 space-y-5" data-testid="terms-page">
@@ -21,140 +34,19 @@ export default function Terms() {
         </div>
       </div>
 
-      <div className="rounded-2xl bg-[#121212] border border-white/5 p-5 leading-relaxed text-sm space-y-5">
-        <Section title="مقدمة">
-          مرحباً بك في تطبيق <b>Berber</b> — منصة لتقديم خدمات الحلاقة المنزلية في العراق.
-          باستخدامك للتطبيق فإنك توافق على الشروط والأحكام التالية. إذا لم توافق على أي بند منها،
-          يُرجى عدم استخدام التطبيق.
-        </Section>
+      <div className="rounded-2xl bg-[#121212] border border-white/5 p-5 leading-relaxed text-sm">
+        {loading ? (
+          <p className="text-center text-zinc-500 py-6">جاري التحميل…</p>
+        ) : !text ? (
+          <p className="text-center text-zinc-500 py-6">تعذّر تحميل الشروط، حاول لاحقاً.</p>
+        ) : (
+          <Markdown text={text} testid="terms-markdown" />
+        )}
 
-        <Section title="١. تعريفات">
-          <List items={[
-            "«التطبيق»: تطبيق Berber بنسختيه الموقع والموبايل.",
-            "«الزبون»: الشخص الذي يطلب خدمة الحلاقة عبر التطبيق.",
-            "«الحلاق»: مقدّم الخدمة المسجّل في التطبيق.",
-            "«الإدارة»: الجهة المالكة والمشغّلة للتطبيق.",
-            "«العمولة»: المبلغ الذي تستقطعه الإدارة من الحلاق عند قبول الحجز.",
-          ]} />
-        </Section>
-
-        <Section title="٢. الخدمات">
-          يقدّم التطبيق وسيلة تواصل بين الزبائن والحلاقين. الخدمات الفعلية (حلاقة كاملة، حلاقة أطفال،
-          شعر فقط، لحية فقط، سشوار) تُنفّذ من قبل الحلاق المستقل، وأسعارها تُعرض داخل التطبيق وقد
-          تتغيّر من وقت لآخر بقرار من الإدارة.
-        </Section>
-
-        <Section title="٣. التسجيل والحساب">
-          <List items={[
-            "يجب أن تكون 18 سنة فأكثر لاستخدام التطبيق.",
-            "تتعهّد بتقديم بيانات صحيحة (الاسم، رقم الهاتف).",
-            "أنت مسؤول عن سرية كلمة المرور وأي نشاط يتم عبر حسابك.",
-            "يحق للإدارة إيقاف أو حذف أي حساب يخالف الشروط.",
-          ]} />
-        </Section>
-
-        <Section title="٤. التزامات الزبون">
-          <List items={[
-            "تقديم عنوان دقيق وكامل لتسهيل وصول الحلاق.",
-            "التواجد في الموقع المتفق عليه عند الموعد.",
-            "دفع المبلغ المستحق نقداً للحلاق عند انتهاء الخدمة.",
-            "احترام الحلاق وعدم تعرّضه لأي إساءة.",
-            "تقييم الخدمة بصدق بعد إتمامها.",
-          ]} />
-        </Section>
-
-        <Section title="٥. التزامات الحلاق">
-          <List items={[
-            "تقديم خدمة بمستوى مهني عالٍ ونظافة كاملة.",
-            "الالتزام بالموعد والتواجد في موقع الزبون في الوقت المتفق.",
-            "استخدام أدوات معقّمة وآمنة.",
-            "احترام الزبون وحفظ خصوصيته.",
-            "عدم طلب أي مبلغ إضافي عن السعر المعلَن في التطبيق.",
-            "الاحتفاظ برصيد كافٍ في المحفظة لتغطية العمولة عن كل حجز يقبله.",
-          ]} />
-        </Section>
-
-        <Section title="٦. الأسعار والعمولة">
-          <List items={[
-            "الأسعار قابلة للتعديل من قبل الإدارة وتُعرض داخل التطبيق دائماً بسعرها الحالي.",
-            "تُحتسب عمولة ثابتة على الحلاق عن كل حجز يقبله، وتُخصم من رصيد محفظته آلياً.",
-            "إذا لم يكن في محفظة الحلاق رصيد كافٍ، فلن يستطيع قبول الطلب حتى يقوم بشحنها.",
-            "شحن المحفظة يتم بالتواصل مع الإدارة عبر واتساب الرسمي (07812059874).",
-            "الإدارة غير مسؤولة عن أي اتفاقات نقدية مباشرة بين الزبون والحلاق خارج التطبيق.",
-          ]} />
-        </Section>
-
-        <Section title="٧. الإلغاء والاسترجاع">
-          <List items={[
-            "يمكن للزبون إلغاء الحجز قبل قبوله من الحلاق.",
-            "بعد قبول الحلاق للحجز، يجب التواصل مع الحلاق مباشرة لأي تعديل.",
-            "العمولة المخصومة من الحلاق غير قابلة للاسترجاع إلا بقرار صريح من الإدارة في حال خطأ تقني مثبت.",
-            "في حال نزاع، يُرجى التواصل مع الدعم خلال 48 ساعة من وقت الحجز.",
-          ]} />
-        </Section>
-
-        <Section title="٨. التقييمات والمحتوى">
-          <List items={[
-            "التقييمات يجب أن تكون صادقة ومحترمة.",
-            "يُمنع نشر محتوى مسيء أو عنصري أو مخالف للقانون.",
-            "للإدارة الحق في حذف أي تقييم أو محتوى مخالف دون إشعار.",
-            "صور معرض الحلاق يجب أن تكون من أعماله الشخصية فقط.",
-          ]} />
-        </Section>
-
-        <Section title="٩. المسؤولية">
-          <List items={[
-            "Berber منصّة وساطة، وليست طرفاً في تنفيذ الخدمة الفعلية.",
-            "الحلاق مسؤول مسؤولية كاملة عن جودة عمله وأي ضرر ينتج عنه.",
-            "الإدارة غير مسؤولة عن خلافات شخصية بين الزبون والحلاق إلا بحدود ما يخص استخدام التطبيق.",
-            "في حالات الطوارئ أو الحوادث، تواصل مع الجهات المختصة فوراً.",
-          ]} />
-        </Section>
-
-        <Section title="١٠. حظر الاستخدام">
-          يُمنع استخدام التطبيق لأي غرض غير مشروع، وكذلك يُمنع محاولة اختراق النظام أو استخدامه
-          لإرسال محتوى ضار أو احتيالي. أي مخالفة قد تؤدي إلى إيقاف الحساب فوراً واتخاذ الإجراءات القانونية.
-        </Section>
-
-        <Section title="١١. تعديل الشروط">
-          يحق للإدارة تعديل هذه الشروط في أي وقت. سيتم إشعارك بأي تعديل جوهري عبر التطبيق.
-          استمرارك في استخدام التطبيق بعد التعديل يُعدّ موافقةً على الشروط الجديدة.
-        </Section>
-
-        <Section title="١٢. الاختصاص القضائي">
-          تخضع هذه الشروط لقوانين جمهورية العراق. أي نزاع ينشأ عنها يُحال إلى المحاكم العراقية المختصة.
-        </Section>
-
-        <Section title="١٣. التواصل">
-          لأي استفسار أو شكوى:
-          <List items={[
-            "واتساب: 07812059874",
-            "بريد إلكتروني: tr1zfrhoy@gmail.com",
-          ]} />
-        </Section>
-
-        <p className="text-xs text-zinc-500 pt-2 border-t border-white/5">
+        <p className="text-xs text-zinc-500 pt-3 mt-3 border-t border-white/5">
           © {new Date().getFullYear()} Berber. جميع الحقوق محفوظة.
         </p>
       </div>
     </div>
   );
 }
-
-const Section = ({ title, children }) => (
-  <div>
-    <h2 className="font-black text-base text-[#D4AF37] mb-2">{title}</h2>
-    <div className="text-zinc-300 leading-7">{children}</div>
-  </div>
-);
-
-const List = ({ items }) => (
-  <ul className="mt-2 space-y-1.5 list-none">
-    {items.map((t, i) => (
-      <li key={i} className="flex gap-2">
-        <span className="text-[#D4AF37] flex-shrink-0">•</span>
-        <span>{t}</span>
-      </li>
-    ))}
-  </ul>
-);

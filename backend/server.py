@@ -28,6 +28,140 @@ DEFAULT_PLATFORM_FEE = 500  # IQD per accepted job (default, overridable via /ap
 ADMIN_PHONE = os.environ.get('ADMIN_PHONE', '07812059874')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'tr1zfrhoy@gmail.com')
 SUPPORT_WHATSAPP = os.environ.get('SUPPORT_WHATSAPP', '9647812059874')
+DEFAULT_SUPPORT_EMAIL = os.environ.get('SUPPORT_EMAIL', ADMIN_EMAIL)
+
+# Default legal pages — admin can override any time from the dashboard. Both
+# strings support the placeholders {{whatsapp}} and {{email}} which are
+# substituted with the current values at render time, so the contact info
+# stays in sync with the rest of the admin settings.
+DEFAULT_PRIVACY_TEXT = """# سياسة الخصوصية
+
+## مقدمة
+نحن في تطبيق **Berber** نلتزم بحماية خصوصية مستخدمينا (الزبائن والحلاقين). توضّح هذه السياسة أنواع البيانات التي نجمعها، وكيفية استخدامها وحمايتها، وحقوقك تجاه بياناتك. باستخدامك للتطبيق فإنك توافق على ما ورد في هذه السياسة.
+
+## ١. البيانات التي نجمعها
+- بيانات الحساب: الاسم الكامل، رقم الهاتف، كلمة المرور (مشفرة).
+- بيانات الموقع الجغرافي: نطلب موقعك لتحديد الحلاقين القريبين منك ولإيصال الخدمة لباب بيتك.
+- بيانات الخدمة: تفاصيل الحجوزات، الأسعار، التقييمات، والمحادثات مع الدعم.
+- بيانات الحلاق: الصورة الشخصية، معرض الأعمال، نبذة عن الحلاق، رصيد المحفظة.
+- البيانات التقنية: نوع الجهاز، نظام التشغيل، عنوان IP، وأوقات الاستخدام (لأغراض الأمان).
+
+## ٢. كيفية استخدام البيانات
+- تنفيذ خدمة الحجز وإيصال الحلاق إلى موقعك.
+- تواصل الحلاق مع الزبون عبر الهاتف لتأكيد الموقع.
+- حساب العمولات وإدارة محفظة الحلاق.
+- تحسين تجربة المستخدم وتطوير ميزات جديدة.
+- حماية المنصة من الاحتيال وسوء الاستخدام.
+- إرسال إشعارات عن الطلبات الجديدة وحالة الحجز.
+
+## ٣. مشاركة البيانات
+لا نبيع بياناتك لأي طرف ثالث. نشارك جزءاً محدوداً منها فقط في الحالات التالية:
+- بين الزبون والحلاق لإتمام الحجز (الاسم، الهاتف، العنوان).
+- مع الإدارة لمعالجة الشكاوى وإدارة المحفظة.
+- عند طلب رسمي من جهة قضائية أو حكومية مختصة.
+
+## ٤. تخزين البيانات وحمايتها
+- البيانات مخزّنة على خوادم آمنة بنظام تشفير حديث.
+- كلمات المرور مشفّرة بـ bcrypt (لا يمكن استرجاعها كنص واضح).
+- جلسات الدخول مؤمّنة عبر JWT.
+- نطبّق إجراءات أمنية قياسية لمنع الوصول غير المصرّح به.
+
+## ٥. حقوقك
+- حق الوصول: يمكنك الاطلاع على بياناتك في صفحة الإعدادات.
+- حق التعديل: يمكنك تحديث الاسم، الهاتف، الصورة، والموقع في أي وقت.
+- حق الحذف: يمكنك طلب حذف حسابك وكل بياناتك بمراسلة الدعم على واتساب.
+- حق التحكم بالإشعارات: يمكنك تفعيلها أو إيقافها من إعدادات جهازك.
+
+## ٦. الإشعارات والموقع
+نطلب صلاحيات الموقع والإشعارات لتقديم الخدمة بأفضل شكل. يمكنك رفضها أو إلغاؤها في أي وقت من إعدادات نظام التشغيل، علماً أن بعض الميزات قد تتأثر.
+
+## ٧. حماية الأطفال
+التطبيق غير موجّه للأطفال دون 13 سنة. لا نجمع بيانات منهم عمداً.
+
+## ٨. التغييرات على هذه السياسة
+قد نُحدّث هذه السياسة من وقت لآخر. سنُشعرك بالتغييرات الجوهرية عبر التطبيق أو الواتساب. الاستمرار في استخدام التطبيق بعد التحديث يُعدّ موافقة على السياسة الجديدة.
+
+## ٩. التواصل معنا
+لأي استفسار أو طلب يخص خصوصيتك، يرجى التواصل معنا عبر:
+- واتساب: {{whatsapp}}
+- بريد إلكتروني: {{email}}
+"""
+
+DEFAULT_TERMS_TEXT = """# الشروط والأحكام
+
+## مقدمة
+مرحباً بك في تطبيق **Berber** — منصة لتقديم خدمات الحلاقة المنزلية في العراق. باستخدامك للتطبيق فإنك توافق على الشروط والأحكام التالية. إذا لم توافق على أي بند منها، يُرجى عدم استخدام التطبيق.
+
+## ١. تعريفات
+- «التطبيق»: تطبيق Berber بنسختيه الموقع والموبايل.
+- «الزبون»: الشخص الذي يطلب خدمة الحلاقة عبر التطبيق.
+- «الحلاق»: مقدّم الخدمة المسجّل في التطبيق.
+- «الإدارة»: الجهة المالكة والمشغّلة للتطبيق.
+- «العمولة»: المبلغ الذي تستقطعه الإدارة من الحلاق عند قبول الحجز.
+
+## ٢. الخدمات
+يقدّم التطبيق وسيلة تواصل بين الزبائن والحلاقين. الخدمات الفعلية تُنفّذ من قبل الحلاق المستقل، وأسعارها تُعرض داخل التطبيق وقد تتغيّر من وقت لآخر بقرار من الإدارة.
+
+## ٣. التسجيل والحساب
+- يجب أن تكون 18 سنة فأكثر لاستخدام التطبيق.
+- تتعهّد بتقديم بيانات صحيحة (الاسم، رقم الهاتف).
+- أنت مسؤول عن سرية كلمة المرور وأي نشاط يتم عبر حسابك.
+- يحق للإدارة إيقاف أو حذف أي حساب يخالف الشروط.
+
+## ٤. التزامات الزبون
+- تقديم عنوان دقيق وكامل لتسهيل وصول الحلاق.
+- التواجد في الموقع المتفق عليه عند الموعد.
+- دفع المبلغ المستحق نقداً للحلاق عند انتهاء الخدمة.
+- احترام الحلاق وعدم تعرّضه لأي إساءة.
+- تقييم الخدمة بصدق بعد إتمامها.
+
+## ٥. التزامات الحلاق
+- تقديم خدمة بمستوى مهني عالٍ ونظافة كاملة.
+- الالتزام بالموعد والتواجد في موقع الزبون في الوقت المتفق.
+- استخدام أدوات معقّمة وآمنة.
+- احترام الزبون وحفظ خصوصيته.
+- عدم طلب أي مبلغ إضافي عن السعر المعلَن في التطبيق.
+- الاحتفاظ برصيد كافٍ في المحفظة لتغطية العمولة عن كل حجز يقبله.
+
+## ٦. الأسعار والعمولة
+- الأسعار قابلة للتعديل من قبل الإدارة وتُعرض داخل التطبيق دائماً بسعرها الحالي.
+- تُحتسب عمولة ثابتة على الحلاق عن كل حجز يقبله، وتُخصم من رصيد محفظته آلياً.
+- إذا لم يكن في محفظة الحلاق رصيد كافٍ، فلن يستطيع قبول الطلب حتى يقوم بشحنها.
+- شحن المحفظة يتم بالتواصل مع الإدارة عبر واتساب الرسمي ({{whatsapp}}).
+- الإدارة غير مسؤولة عن أي اتفاقات نقدية مباشرة بين الزبون والحلاق خارج التطبيق.
+
+## ٧. الإلغاء والاسترجاع
+- يمكن للزبون إلغاء الحجز قبل قبوله من الحلاق.
+- بعد قبول الحلاق للحجز، يجب التواصل مع الحلاق مباشرة لأي تعديل.
+- العمولة المخصومة من الحلاق غير قابلة للاسترجاع إلا بقرار صريح من الإدارة في حال خطأ تقني مثبت.
+- في حال نزاع، يُرجى التواصل مع الدعم خلال 48 ساعة من وقت الحجز.
+
+## ٨. التقييمات والمحتوى
+- التقييمات يجب أن تكون صادقة ومحترمة.
+- يُمنع نشر محتوى مسيء أو عنصري أو مخالف للقانون.
+- للإدارة الحق في حذف أي تقييم أو محتوى مخالف دون إشعار.
+- صور معرض الحلاق يجب أن تكون من أعماله الشخصية فقط.
+
+## ٩. المسؤولية
+- Berber منصّة وساطة، وليست طرفاً في تنفيذ الخدمة الفعلية.
+- الحلاق مسؤول مسؤولية كاملة عن جودة عمله وأي ضرر ينتج عنه.
+- الإدارة غير مسؤولة عن خلافات شخصية بين الزبون والحلاق إلا بحدود ما يخص استخدام التطبيق.
+- في حالات الطوارئ أو الحوادث، تواصل مع الجهات المختصة فوراً.
+
+## ١٠. حظر الاستخدام
+يُمنع استخدام التطبيق لأي غرض غير مشروع، وكذلك يُمنع محاولة اختراق النظام أو استخدامه لإرسال محتوى ضار أو احتيالي. أي مخالفة قد تؤدي إلى إيقاف الحساب فوراً واتخاذ الإجراءات القانونية.
+
+## ١١. تعديل الشروط
+يحق للإدارة تعديل هذه الشروط في أي وقت. سيتم إشعارك بأي تعديل جوهري عبر التطبيق. استمرارك في استخدام التطبيق بعد التعديل يُعدّ موافقةً على الشروط الجديدة.
+
+## ١٢. الاختصاص القضائي
+تخضع هذه الشروط لقوانين جمهورية العراق. أي نزاع ينشأ عنها يُحال إلى المحاكم العراقية المختصة.
+
+## ١٣. التواصل
+لأي استفسار أو شكوى:
+- واتساب: {{whatsapp}}
+- بريد إلكتروني: {{email}}
+"""
 
 DEFAULT_SERVICES = [
     {"key": "full", "name_ar": "حلاقة كاملة", "price": 10000, "icon": "Scissors", "active": True},
@@ -163,6 +297,9 @@ async def get_settings() -> dict:
             "platform_fee": DEFAULT_PLATFORM_FEE,
             "services": DEFAULT_SERVICES,
             "support_whatsapp": SUPPORT_WHATSAPP,
+            "support_email": DEFAULT_SUPPORT_EMAIL,
+            "privacy_text": DEFAULT_PRIVACY_TEXT,
+            "terms_text": DEFAULT_TERMS_TEXT,
         }
         await db.settings.insert_one(s)
         s.pop("_id", None)
@@ -170,6 +307,9 @@ async def get_settings() -> dict:
     s.setdefault("platform_fee", DEFAULT_PLATFORM_FEE)
     s.setdefault("services", DEFAULT_SERVICES)
     s.setdefault("support_whatsapp", SUPPORT_WHATSAPP)
+    s.setdefault("support_email", DEFAULT_SUPPORT_EMAIL)
+    s.setdefault("privacy_text", DEFAULT_PRIVACY_TEXT)
+    s.setdefault("terms_text", DEFAULT_TERMS_TEXT)
     return s
 
 
@@ -185,6 +325,9 @@ class SettingsIn(BaseModel):
     platform_fee: Optional[int] = None
     services: Optional[List[dict]] = None
     support_whatsapp: Optional[str] = None
+    support_email: Optional[str] = None
+    privacy_text: Optional[str] = None
+    terms_text: Optional[str] = None
 
 
 class WalletTopupIn(BaseModel):
@@ -299,11 +442,43 @@ async def get_services():
 
 @api_router.get("/config")
 async def get_config():
-    """Public config: support whatsapp and visible services."""
+    """Public config: support whatsapp, email, and visible services."""
     s = await get_settings()
     return {
         "support_whatsapp": s.get("support_whatsapp", SUPPORT_WHATSAPP),
+        "support_email": s.get("support_email", DEFAULT_SUPPORT_EMAIL),
         "platform_fee": s.get("platform_fee", DEFAULT_PLATFORM_FEE),
+    }
+
+
+def _render_legal(template: str, s: dict) -> str:
+    """Substitute {{whatsapp}} and {{email}} placeholders with live values."""
+    if not template:
+        return ""
+    whatsapp = s.get("support_whatsapp", SUPPORT_WHATSAPP)
+    email = s.get("support_email", DEFAULT_SUPPORT_EMAIL)
+    return template.replace("{{whatsapp}}", whatsapp).replace("{{email}}", email)
+
+
+@api_router.get("/legal/privacy")
+async def get_privacy_policy():
+    """Public — full Privacy Policy text with live placeholders substituted."""
+    s = await get_settings()
+    return {
+        "text": _render_legal(s.get("privacy_text", DEFAULT_PRIVACY_TEXT), s),
+        "support_whatsapp": s.get("support_whatsapp", SUPPORT_WHATSAPP),
+        "support_email": s.get("support_email", DEFAULT_SUPPORT_EMAIL),
+    }
+
+
+@api_router.get("/legal/terms")
+async def get_terms():
+    """Public — full Terms & Conditions text with live placeholders substituted."""
+    s = await get_settings()
+    return {
+        "text": _render_legal(s.get("terms_text", DEFAULT_TERMS_TEXT), s),
+        "support_whatsapp": s.get("support_whatsapp", SUPPORT_WHATSAPP),
+        "support_email": s.get("support_email", DEFAULT_SUPPORT_EMAIL),
     }
 
 

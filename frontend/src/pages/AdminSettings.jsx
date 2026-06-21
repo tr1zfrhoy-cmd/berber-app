@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { api, fmtIQD } from "../lib/api";
 import { toast } from "sonner";
 import { errMsg } from "../lib/errors";
-import { Save, Plus, Trash2, Scissors } from "lucide-react";
+import { Save, Plus, Trash2, Scissors, FileText, Shield, Mail, MessageCircle } from "lucide-react";
 
 export default function AdminSettings() {
   const [settings, setSettings] = useState(null);
@@ -15,9 +15,39 @@ export default function AdminSettings() {
   const load = async () => {
     try {
       const { data } = await api.get("/admin/settings");
-      setSettings({ platform_fee: data.platform_fee, services: data.services, support_whatsapp: data.support_whatsapp });
+      setSettings({
+        platform_fee: data.platform_fee,
+        services: data.services,
+        support_whatsapp: data.support_whatsapp,
+        support_email: data.support_email || "",
+        privacy_text: data.privacy_text || "",
+        terms_text: data.terms_text || "",
+      });
       setSavedFee(data.platform_fee);
     } catch (e) { toast.error(errMsg(e)); }
+  };
+
+  // Per-section savers — each one persists ONLY its own subset of fields so the
+  // admin can update legal text or contact info without touching commission/services.
+  const saveLegal = async () => {
+    setBusy(true);
+    try {
+      const { data } = await api.patch("/admin/settings", {
+        privacy_text: settings.privacy_text,
+        terms_text: settings.terms_text,
+        support_email: settings.support_email,
+        support_whatsapp: settings.support_whatsapp,
+      });
+      setSettings((s) => ({
+        ...s,
+        privacy_text: data.privacy_text,
+        terms_text: data.terms_text,
+        support_email: data.support_email,
+        support_whatsapp: data.support_whatsapp,
+      }));
+      toast.success("تم حفظ النصوص القانونية وبيانات التواصل");
+    } catch (e) { toast.error(errMsg(e)); }
+    finally { setBusy(false); }
   };
 
   // Dedicated commission saver — persists JUST the fee to the DB.
@@ -96,15 +126,89 @@ export default function AdminSettings() {
         )}
       </div>
 
-      {/* WhatsApp */}
-      <div className="rounded-2xl bg-[#121212] border border-white/5 p-5">
-        <h3 className="text-sm font-bold mb-3">رقم واتساب الدعم</h3>
-        <input data-testid="whatsapp-input"
-          value={settings.support_whatsapp}
-          onChange={(e) => setSettings({ ...settings, support_whatsapp: e.target.value })}
-          className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none text-sm"
-          dir="ltr" placeholder="9647812059874" />
-        <div className="text-[11px] text-zinc-500 mt-2">صيغة دولية بدون + (مثال: 9647812059874)</div>
+      {/* WhatsApp + Email (contact info, used dynamically inside legal pages) */}
+      <div className="rounded-2xl bg-[#121212] border border-white/5 p-5 space-y-3">
+        <h3 className="text-sm font-bold flex items-center gap-2">
+          <MessageCircle className="w-4 h-4 text-[#D4AF37]" /> بيانات التواصل
+        </h3>
+        <div className="space-y-2">
+          <label className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+            <MessageCircle className="w-3 h-3" /> رقم واتساب الدعم
+          </label>
+          <input data-testid="whatsapp-input"
+            value={settings.support_whatsapp}
+            onChange={(e) => setSettings({ ...settings, support_whatsapp: e.target.value })}
+            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none text-sm"
+            dir="ltr" placeholder="9647812059874" />
+          <div className="text-[11px] text-zinc-500">صيغة دولية بدون + (مثال: 9647812059874)</div>
+        </div>
+        <div className="space-y-2">
+          <label className="text-[11px] text-zinc-400 flex items-center gap-1.5">
+            <Mail className="w-3 h-3" /> البريد الإلكتروني للدعم
+          </label>
+          <input data-testid="email-input"
+            value={settings.support_email}
+            onChange={(e) => setSettings({ ...settings, support_email: e.target.value })}
+            className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none text-sm"
+            dir="ltr" placeholder="support@berber.app" />
+        </div>
+      </div>
+
+      {/* Legal: Privacy Policy + Terms editor */}
+      <div className="rounded-2xl bg-[#121212] border border-[#D4AF37]/20 p-5 space-y-4" data-testid="legal-editor">
+        <header>
+          <h3 className="text-sm font-bold flex items-center gap-2">
+            <FileText className="w-4 h-4 text-[#D4AF37]" /> النصوص القانونية
+          </h3>
+          <p className="text-[11px] text-zinc-500 mt-1 leading-5">
+            عدّل النصوص بالكامل. التغييرات تظهر فوراً للمستخدمين بعد الحفظ.<br />
+            <span className="text-[#D4AF37] font-bold">{`{{whatsapp}}`}</span> و <span className="text-[#D4AF37] font-bold">{`{{email}}`}</span> يتم استبدالهما تلقائياً بقيم التواصل أعلاه.<br />
+            تنسيقات مدعومة: <code className="text-[#D4AF37]">## عنوان</code>، <code className="text-[#D4AF37]">- نقطة</code>، <code className="text-[#D4AF37]">**عريض**</code>.
+          </p>
+        </header>
+
+        <div className="space-y-2">
+          <label className="text-xs font-bold flex items-center gap-1.5 text-zinc-300">
+            <Shield className="w-3.5 h-3.5 text-[#D4AF37]" /> سياسة الخصوصية
+          </label>
+          <textarea
+            data-testid="privacy-textarea"
+            value={settings.privacy_text}
+            onChange={(e) => setSettings({ ...settings, privacy_text: e.target.value })}
+            rows={14}
+            dir="rtl"
+            spellCheck={false}
+            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 outline-none text-xs font-mono leading-6 resize-y focus:border-[#D4AF37]/50"
+            placeholder="# سياسة الخصوصية..."
+          />
+          <div className="text-[10px] text-zinc-500 text-left" dir="ltr">
+            {(settings.privacy_text || "").length} chars
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-xs font-bold flex items-center gap-1.5 text-zinc-300">
+            <FileText className="w-3.5 h-3.5 text-[#D4AF37]" /> الشروط والأحكام
+          </label>
+          <textarea
+            data-testid="terms-textarea"
+            value={settings.terms_text}
+            onChange={(e) => setSettings({ ...settings, terms_text: e.target.value })}
+            rows={14}
+            dir="rtl"
+            spellCheck={false}
+            className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-3 outline-none text-xs font-mono leading-6 resize-y focus:border-[#D4AF37]/50"
+            placeholder="# الشروط والأحكام..."
+          />
+          <div className="text-[10px] text-zinc-500 text-left" dir="ltr">
+            {(settings.terms_text || "").length} chars
+          </div>
+        </div>
+
+        <button data-testid="save-legal-btn" onClick={saveLegal} disabled={busy}
+          className="w-full py-3 rounded-xl bg-emerald-500 text-black font-black text-sm flex items-center justify-center gap-2 hover:bg-emerald-400 transition disabled:opacity-50">
+          <Save className="w-4 h-4" /> {busy ? "جاري الحفظ..." : "حفظ النصوص القانونية والتواصل"}
+        </button>
       </div>
 
       {/* Services */}
