@@ -429,6 +429,26 @@ def require_role(*roles):
 
 
 # ---------------- Routes ----------------
+@api_router.post("/admin/wipe")
+async def admin_wipe(payload: dict, user: dict = Depends(require_role("admin"))):
+    """Dangerous, admin-only: wipe all users + dependent collections. Used to
+    sync a clean preview state into production. Requires an explicit
+    confirmation phrase in the request body to prevent accidents."""
+    if (payload or {}).get("confirm") != "WIPE_ALL_USERS_AND_DATA":
+        raise HTTPException(status_code=400, detail="confirmation phrase missing")
+
+    targets = ["users", "bookings", "chat_messages", "wallet_txns", "ratings", "reports", "files"]
+    result = {}
+    for col in targets:
+        r = await db[col].delete_many({})
+        result[col] = r.deleted_count
+    # The caller (current admin) just deleted themselves. Their token becomes
+    # invalid on next request. They must re-register with ADMIN_PHONE to get
+    # the admin role back.
+    logger.warning(f"DB wipe executed by {user.get('phone')}: {result}")
+    return {"wiped": result, "note": "Re-register with ADMIN_PHONE to restore admin access"}
+
+
 @api_router.get("/")
 async def root():
     return {"app": "halaq-delivery", "status": "ok"}
