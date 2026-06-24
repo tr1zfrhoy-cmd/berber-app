@@ -18,9 +18,9 @@ const inlineRender = (text) => {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return parts.map((p, i) => {
     if (/^\*\*[^*]+\*\*$/.test(p)) {
-      return <b key={i} className="text-white font-black">{p.slice(2, -2)}</b>;
+      return <b key={`b-${i}-${p}`} className="text-white font-black">{p.slice(2, -2)}</b>;
     }
-    return <React.Fragment key={i}>{p}</React.Fragment>;
+    return <React.Fragment key={`t-${i}-${p.length}`}>{p}</React.Fragment>;
   });
 };
 
@@ -36,7 +36,7 @@ export default function Markdown({ text = "", testid }) {
     blocks.push(
       <ul key={`l${blocks.length}`} className="mt-2 mb-3 space-y-1.5 list-none">
         {listBuf.map((item, i) => (
-          <li key={i} className="flex gap-2">
+          <li key={`li-${i}-${item.length}`} className="flex gap-2">
             <span className="text-[#D4AF37] flex-shrink-0">•</span>
             <span>{inlineRender(item)}</span>
           </li>
@@ -51,7 +51,7 @@ export default function Markdown({ text = "", testid }) {
     blocks.push(
       <p key={`p${blocks.length}`} className="text-zinc-300 leading-7 mb-3">
         {paraBuf.map((line, i) => (
-          <React.Fragment key={i}>
+          <React.Fragment key={`fr-${i}-${line.length}`}>
             {i > 0 && <br />}
             {inlineRender(line)}
           </React.Fragment>

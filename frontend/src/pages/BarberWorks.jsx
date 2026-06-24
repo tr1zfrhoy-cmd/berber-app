@@ -231,9 +231,9 @@ export default function BarberWorks() {
 
           {preview.images.length > 1 && (
             <div className="absolute bottom-5 left-0 right-0 flex justify-center gap-1.5">
-              {preview.images.map((_, i) => (
+              {preview.images.map((url, i) => (
                 <span
-                  key={i}
+                  key={url || `dot-${i}`}
                   className={`w-1.5 h-1.5 rounded-full ${i === preview.index ? "bg-[#D4AF37] w-4" : "bg-white/30"} transition-all`}
                 />
               ))}
