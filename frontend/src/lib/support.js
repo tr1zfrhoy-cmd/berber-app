@@ -28,49 +28,95 @@ export function supportWhatsappUrl(user, phoneFallback = "9647812059874") {
 /**
  * Open WhatsApp natively on the user's device.
  *
- * Strategy (works inside a TWA, regular browser, and iOS Safari):
- *   1. Trigger the `whatsapp://` URI scheme — registered by BOTH WhatsApp
- *      and WhatsApp Business on Android (and by WhatsApp on iOS). The OS picks
- *      whichever app is installed; if both are installed it picks the user's
- *      remembered default. This bypasses Chrome Custom Tabs entirely.
- *   2. If no WhatsApp variant is installed, the page stays visible — we fall
- *      back to the public `https://wa.me/...` link after a short delay so the
- *      user can install WhatsApp from the web.
+ * Robust strategy that works inside TWA, Chrome Custom Tabs, in-app WebViews,
+ * older Android (4.4+), and legacy desktop browsers:
  *
- * @param {object} user      current authenticated user (used to prefill text)
- * @param {string} fallback  emergency phone number when SUPPORT.whatsapp_phone is missing
+ *   1. Try `whatsapp://send?...` first — both WhatsApp and WhatsApp Business
+ *      register this URI scheme on Android & iOS. Triggers the system intent
+ *      resolver. No popup is opened; we only ever assign `window.location.href`.
+ *   2. Watch `document.visibilitychange`. If the app launches successfully the
+ *      page goes background ⇒ we cancel the pending fallback timer so we don't
+ *      navigate twice (which is what was causing the "Pop-up blocked (2)" toast).
+ *   3. If after ~1.4s the page is still visible (= no WA app installed), we
+ *      perform a same-tab navigation to `https://wa.me/...`. We deliberately use
+ *      `window.location.href = ...` instead of `window.open(..., '_blank')`
+ *      because `_blank` outside a click handler is what the browser blocks.
+ *
+ * Defensive coding: feature-detects `document.hidden`, guards against double
+ * invocation, and never throws — older WebViews that don't support a scheme
+ * just sit silently and the web fallback takes over.
  */
 export function openWhatsApp(user, fallback = "9647812059874") {
-  const target = getTarget(fallback);
-  const text = buildText(user);
-  const encoded = encodeURIComponent(text);
+  if (typeof window === "undefined" || typeof document === "undefined") return;
 
-  const nativeUrl = `whatsapp://send?phone=${target}&text=${encoded}`;
-  const webUrl = `https://wa.me/${target}?text=${encoded}`;
+  var target = getTarget(fallback);
+  var text = buildText(user);
+  var encoded = encodeURIComponent(text);
 
-  // SSR / non-browser safety (unit tests etc.)
-  if (typeof window === "undefined") return;
+  var nativeUrl = "whatsapp://send?phone=" + target + "&text=" + encoded;
+  var webUrl = "https://wa.me/" + target + "?text=" + encoded;
 
-  const start = Date.now();
-  // If WhatsApp opens, the page goes background within ~600ms — cancel the web fallback.
-  const fallbackTimer = setTimeout(() => {
-    if (document.hidden) return;
-    if (Date.now() - start > 4000) return; // user already moved on, don't hijack
-    // Use _top to escape any embedded webview / iframe context.
-    try { window.open(webUrl, "_blank", "noopener"); }
-    catch { window.location.href = webUrl; }
-  }, 1400);
+  var done = false;
+  var fallbackTimer = null;
 
-  const onVisibility = () => {
-    if (document.hidden) {
+  function cleanup() {
+    if (fallbackTimer) {
       clearTimeout(fallbackTimer);
-      document.removeEventListener("visibilitychange", onVisibility);
+      fallbackTimer = null;
     }
-  };
-  document.addEventListener("visibilitychange", onVisibility);
+    try { document.removeEventListener("visibilitychange", onVisibility); } catch (e) {}
+    try { window.removeEventListener("pagehide", onLeave); } catch (e) {}
+    try { window.removeEventListener("blur", onLeave); } catch (e) {}
+  }
 
-  // Fire the native scheme. On Android TWA Chrome lets this propagate to the
-  // system intent resolver (which finds com.whatsapp / com.whatsapp.w4b).
-  window.location.href = nativeUrl;
+  function onVisibility() {
+    // Older browsers may not implement `document.hidden`; fall back to checking
+    // visibilityState if available.
+    var hidden = false;
+    try {
+      if (typeof document.hidden === "boolean") hidden = document.hidden;
+      else if (document.visibilityState) hidden = document.visibilityState !== "visible";
+    } catch (e) {}
+    if (hidden) {
+      done = true;     // native app opened — stop the fallback
+      cleanup();
+    }
+  }
+
+  function onLeave() {
+    // Some Android WebViews don't fire visibilitychange but DO fire pagehide/blur
+    // right before handing off to the system app.
+    done = true;
+    cleanup();
+  }
+
+  function runFallback() {
+    fallbackTimer = null;
+    if (done) return;
+    // Same-tab navigation — not blocked by popup filters.
+    try {
+      window.location.href = webUrl;
+    } catch (e) {
+      // Last-ditch: do nothing rather than throwing on an exotic legacy WebView.
+    }
+  }
+
+  try { document.addEventListener("visibilitychange", onVisibility); } catch (e) {}
+  try { window.addEventListener("pagehide", onLeave); } catch (e) {}
+  try { window.addEventListener("blur", onLeave); } catch (e) {}
+
+  // Schedule the web fallback. 1400ms is long enough for the OS intent resolver
+  // to take focus on slow devices but short enough to stay snappy.
+  fallbackTimer = setTimeout(runFallback, 1400);
+
+  // Fire the native scheme. Same-tab navigation — never opens a popup.
+  try {
+    window.location.href = nativeUrl;
+  } catch (e) {
+    // If even location assignment fails (very legacy WebView), trigger the
+    // fallback immediately.
+    cleanup();
+    try { window.location.href = webUrl; } catch (e2) {}
+  }
 }
 
