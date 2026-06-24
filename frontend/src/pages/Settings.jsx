@@ -5,7 +5,7 @@ import { LogOut, User, Phone, Save, MapPin, Edit3, Shield, Image, Plus, Trash2, 
 import { toast } from "sonner";
 import { useState } from "react";
 import { api } from "../lib/api";
-import { supportWhatsappUrl } from "../lib/support";
+import { supportWhatsappUrl, openWhatsApp } from "../lib/support";
 import { errMsg } from "../lib/errors";
 import { AvatarUpload, GalleryUpload } from "../components/ImageUpload";
 import Avatar from "../components/Avatar";
@@ -65,6 +65,7 @@ export default function Settings() {
   const removePic = (i) => setPortfolio(portfolio.filter((_, idx) => idx !== i));
 
   const supportUrl = supportWhatsappUrl(user);
+  const handleSupport = () => openWhatsApp(user);
 
   return (
     <div className="px-5 pt-6 space-y-5" data-testid="settings-page">
@@ -153,11 +154,11 @@ export default function Settings() {
           <span className="flex items-center gap-3 text-sm font-bold"><MapPin className="w-4 h-4 text-[#D4AF37]" /> تحديث موقعي</span>
           <span className="text-zinc-500 text-xs">{user?.lat ? "محدد" : "غير محدد"}</span>
         </button>
-        <a data-testid="settings-support-whatsapp" href={supportUrl} target="_blank" rel="noreferrer"
-          className="w-full flex items-center justify-between py-3 px-2 hover:bg-white/5 rounded-xl transition">
+        <button type="button" data-testid="settings-support-whatsapp" onClick={handleSupport}
+          className="w-full flex items-center justify-between py-3 px-2 hover:bg-white/5 rounded-xl transition text-right">
           <span className="flex items-center gap-3 text-sm font-bold"><Shield className="w-4 h-4 text-[#D4AF37]" /> تواصل مع الدعم عبر واتساب</span>
           <span className="text-emerald-400 text-xs">واتساب</span>
-        </a>
+        </button>
       </div>
 
       <button data-testid="logout-btn"

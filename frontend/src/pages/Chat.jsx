@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useLocation } from "react-router-dom";
 import { Send, MessageCircle, Phone } from "lucide-react";
 import { toast } from "sonner";
-import { supportWhatsappUrl } from "../lib/support";
+import { supportWhatsappUrl, openWhatsApp } from "../lib/support";
 import { errMsg, logErr } from "../lib/errors";
 
 export default function Chat() {
@@ -59,6 +59,7 @@ export default function Chat() {
   };
 
   const supportUrl = supportWhatsappUrl(user);
+  const handleSupport = () => openWhatsApp(user);
 
   return (
     <div className="px-5 pt-6 pb-4" data-testid="chat-page">
@@ -68,8 +69,8 @@ export default function Chat() {
       </header>
 
       {!isAdmin && (
-        <a data-testid="support-whatsapp-main" href={supportUrl} target="_blank" rel="noreferrer"
-          className="block rounded-2xl p-5 mb-4 bg-gradient-to-br from-emerald-500 to-emerald-700 text-black">
+        <button type="button" data-testid="support-whatsapp-main" onClick={handleSupport}
+          className="block w-full text-right rounded-2xl p-5 mb-4 bg-gradient-to-br from-emerald-500 to-emerald-700 text-black">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-black/20 flex items-center justify-center">
               <Phone className="w-6 h-6" />
@@ -84,7 +85,7 @@ export default function Chat() {
             </div>
             <MessageCircle className="w-5 h-5" />
           </div>
-        </a>
+        </button>
       )}
 
       {isAdmin && (

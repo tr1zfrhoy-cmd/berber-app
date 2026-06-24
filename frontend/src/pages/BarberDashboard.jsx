@@ -5,7 +5,7 @@ import { Check, X, MapPin, Phone, Clock, PowerOff, Power, Bell, BellOff, Navigat
 import { toast } from "sonner";
 import { StatusBadge } from "./CustomerHome";
 import { errMsg, logErr } from "../lib/errors";
-import { supportWhatsappUrl } from "../lib/support";
+import { supportWhatsappUrl, openWhatsApp } from "../lib/support";
 import Avatar from "../components/Avatar";
 
 // Pleasant 3-tone notification chime via Web Audio API (no asset needed).
@@ -214,11 +214,11 @@ export default function BarberDashboard() {
           <div className="text-xs text-zinc-400">رصيد محفظة العمولات</div>
           <div className="text-xl font-black gold-text">{fmtIQD(user?.wallet_balance || 0)}</div>
         </div>
-        <a href={supportWhatsappUrl(user)} target="_blank" rel="noreferrer"
+        <button type="button" onClick={() => openWhatsApp(user)}
           data-testid="dashboard-topup-btn"
           className="px-3 py-2 rounded-xl bg-emerald-500 text-black font-black text-xs flex items-center gap-1">
           <MessageCircle className="w-3.5 h-3.5" /> شحن
-        </a>
+        </button>
       </div>
 
 

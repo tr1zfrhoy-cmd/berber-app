@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { api, fmtIQD } from "../lib/api";
 import { useAuth } from "../context/AuthContext";
 import { Wallet as WalletIcon, TrendingUp, Receipt, CreditCard, ArrowDownLeft, MessageCircle } from "lucide-react";
-import { supportWhatsappUrl } from "../lib/support";
+import { openWhatsApp } from "../lib/support";
 
 export default function Wallet() {
   const { user } = useAuth();
@@ -12,7 +12,7 @@ export default function Wallet() {
 
   if (!data) return <div className="px-5 pt-10 text-center text-zinc-500">...</div>;
 
-  const supportUrl = supportWhatsappUrl(user);
+  const handleSupport = () => openWhatsApp(user);
 
   return (
     <div className="px-5 pt-6 space-y-5" data-testid="wallet-page">
@@ -43,11 +43,11 @@ export default function Wallet() {
         </div>
 
         {user.role === "barber" && (
-          <a data-testid="topup-whatsapp-btn" href={supportUrl} target="_blank" rel="noreferrer"
+          <button type="button" data-testid="topup-whatsapp-btn" onClick={handleSupport}
             className="mt-5 w-full py-3 rounded-2xl bg-emerald-500 text-black font-black flex items-center justify-center gap-2 hover:bg-emerald-400 transition">
             <MessageCircle className="w-4 h-4" />
             شحن المحفظة عبر الواتساب
-          </a>
+          </button>
         )}
       </div>
 
