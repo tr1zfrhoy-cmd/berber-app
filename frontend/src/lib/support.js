@@ -14,12 +14,12 @@ const buildText = (user) => {
 
 const cleanPhone = (raw) => (raw || "").toString().replace(/[^\d]/g, "");
 
-const getTarget = (fallback = "9647812059874") =>
+const getTarget = (fallback = "9647512614831") =>
   cleanPhone(SUPPORT?.whatsapp_phone || fallback);
 
 // Kept for backwards compatibility (some places still rely on the web URL,
 // e.g. <a> tags inside Markdown). New code should call `openWhatsApp(user)`.
-export function supportWhatsappUrl(user, phoneFallback = "9647812059874") {
+export function supportWhatsappUrl(user, phoneFallback = "9647512614831") {
   const target = getTarget(phoneFallback);
   const text = encodeURIComponent(buildText(user));
   return `https://wa.me/${target}?text=${text}`;
@@ -46,7 +46,7 @@ export function supportWhatsappUrl(user, phoneFallback = "9647812059874") {
  * invocation, and never throws — older WebViews that don't support a scheme
  * just sit silently and the web fallback takes over.
  */
-export function openWhatsApp(user, fallback = "9647812059874") {
+export function openWhatsApp(user, fallback = "9647512614831") {
   if (typeof window === "undefined" || typeof document === "undefined") return;
 
   var target = getTarget(fallback);

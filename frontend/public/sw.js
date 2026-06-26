@@ -4,7 +4,7 @@
 //   * API traffic: network-only (no caching)
 //   * Navigation: network-first, falls back to offline.html when network fails
 //   * Static assets (JS/CSS/img): stale-while-revalidate
-const CACHE = "berber-v26";
+const CACHE = "berber-v27";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   "/",

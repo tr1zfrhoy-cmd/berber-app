@@ -27,7 +27,7 @@ JWT_ALG = 'HS256'
 DEFAULT_PLATFORM_FEE = 500  # IQD per accepted job (default, overridable via /api/admin/settings)
 ADMIN_PHONE = os.environ.get('ADMIN_PHONE', '07812059874')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'tr1zfrhoy@gmail.com')
-SUPPORT_WHATSAPP = os.environ.get('SUPPORT_WHATSAPP', '9647812059874')
+SUPPORT_WHATSAPP = os.environ.get('SUPPORT_WHATSAPP', '9647512614831')
 DEFAULT_SUPPORT_EMAIL = os.environ.get('SUPPORT_EMAIL', ADMIN_EMAIL)
 
 # Default legal pages — admin can override any time from the dashboard. Both

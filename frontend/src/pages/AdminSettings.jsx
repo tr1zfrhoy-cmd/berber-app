@@ -139,8 +139,8 @@ export default function AdminSettings() {
             value={settings.support_whatsapp}
             onChange={(e) => setSettings({ ...settings, support_whatsapp: e.target.value })}
             className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 outline-none text-sm"
-            dir="ltr" placeholder="9647812059874" />
-          <div className="text-[11px] text-zinc-500">صيغة دولية بدون + (مثال: 9647812059874)</div>
+            dir="ltr" placeholder="9647512614831" />
+          <div className="text-[11px] text-zinc-500">صيغة دولية بدون + (مثال: 9647512614831)</div>
         </div>
         <div className="space-y-2">
           <label className="text-[11px] text-zinc-400 flex items-center gap-1.5">
