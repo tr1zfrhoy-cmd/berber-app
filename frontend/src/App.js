@@ -79,30 +79,45 @@ const Protected = () => {
   );
 };
 
+const isOnboarded = () => {
+  try { return localStorage.getItem("berber_onboarded") === "1"; }
+  catch (e) { return true; }
+};
+
+// Route-level guards that re-read localStorage on EVERY render/navigation
+// so that dismissing onboarding takes effect immediately without a page reload.
+const OnboardingGate = () => {
+  const { user } = useAuth();
+  if (isOnboarded()) return <Navigate to={user ? "/app" : "/auth"} replace />;
+  return <Onboarding />;
+};
+
+const AuthGate = () => {
+  const { user } = useAuth();
+  if (user) return <Navigate to="/app" replace />;
+  if (!isOnboarded()) return <Navigate to="/onboarding" replace />;
+  return <Auth />;
+};
+
+const CatchAllRedirect = () => {
+  const { user } = useAuth();
+  if (user) return <Navigate to="/app" replace />;
+  return <Navigate to={isOnboarded() ? "/auth" : "/onboarding"} replace />;
+};
+
 const Root = () => {
   const [showSplash, setShowSplash] = useState(true);
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (showSplash) return <Splash onDone={() => setShowSplash(false)} />;
   if (loading) return null;
 
-  // First-run onboarding gate: only for guests who haven't seen the intro yet.
-  let onboarded = true;
-  try { onboarded = localStorage.getItem("berber_onboarded") === "1"; } catch (e) { /* ignore */ }
-
   return (
     <Routes>
-      <Route path="/onboarding" element={
-        onboarded ? <Navigate to={user ? "/app" : "/auth"} replace /> : <Onboarding />
-      } />
-      <Route path="/auth" element={
-        user ? <Navigate to="/app" replace />
-             : (onboarded ? <Auth /> : <Navigate to="/onboarding" replace />)
-      } />
+      <Route path="/onboarding" element={<OnboardingGate />} />
+      <Route path="/auth" element={<AuthGate />} />
       <Route path="/app/*" element={<Protected />} />
-      <Route path="*" element={
-        <Navigate to={user ? "/app" : (onboarded ? "/auth" : "/onboarding")} replace />
-      } />
+      <Route path="*" element={<CatchAllRedirect />} />
     </Routes>
   );
 };
