@@ -1,0 +1,30 @@
+{
+  "summary": "Verified offline network error toast fix in Auth (login + signup). Both flows now display the Arabic friendly message 'عذراً، لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة وإعادة المحاولة 🔌' instead of the English 'Network Error'. Regressions for online login (valid + wrong password) and onboarding Skip all pass.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "TEST_1_offline_login": {"status": "PASS", "toast_text": "عذراً، لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة وإعادة المحاولة 🔌", "network_error_string_present": false},
+    "TEST_2_offline_signup": {"status": "PASS", "toast_text": "عذراً، لا يوجد اتصال بالإنترنت. يرجى التحقق من الشبكة وإعادة المحاولة 🔌", "note": "Toast appeared within ~0.5s (geolocation resolved/denied fast in headless); initial 6s wait missed it due to sonner ~4s auto-dismiss. Retest with polling confirmed toast IS shown correctly."},
+    "TEST_3_online_valid_login": {"status": "PASS", "url": "/app", "success_toast": "مرحبا بعودتك!"},
+    "TEST_4_online_wrong_password": {"status": "PASS", "toast_text": "رقم الهاتف أو كلمة المرور غير صحيحة", "network_error_string_present": false},
+    "TEST_5_onboarding_skip_regression": {"status": "PASS", "landed_on": "/auth"}
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "errors.js isNetworkError() correctly covers navigator.onLine, ERR_NETWORK, ECONNABORTED, 'Network Error' string, and no-response cases — comprehensive.",
+    "The ASCII-only guard in errMsg (line 25) is a nice safety net to prevent English SDK strings from leaking to Arabic UI.",
+    "Minor: Auth.jsx geolocation Promise has a subtle bug — setTimeout(res, 4000) resolves the outer Promise but the getCurrentPosition callbacks continue firing later; not a correctness issue but worth cleaning up (double-resolve is a no-op for Promises)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (5/5)"},
+  "test_credentials": "Admin: 07812059874 / Admin@2026 — works",
+  "seed_data_creation": "none",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Preview URL redirects to /onboarding on fresh state; always click data-testid=onboarding-skip before Auth tests. Sonner toasts appear as [data-sonner-toast] with rich colors, default ~4s auto-dismiss — poll frequently after action, don't wait 6s before first check. Service Worker berber-v30 does not interfere as long as offline is toggled AFTER SPA has fully hydrated."
+}
