@@ -75,6 +75,8 @@ export default function BarberDashboard() {
   const fireNotification = async (b) => {
     playChime();
     try { audioRef.current?.play().catch(() => {}); } catch (e) { logErr("audio play failed:", e); }
+    // Native haptic feedback — mimics native app new-order alert
+    try { navigator.vibrate?.([200, 100, 200, 100, 400]); } catch (e) {}
     toast.success(`طلب جديد · ${b.service_name} · ${fmtIQD(b.price)}`, { duration: 6000 });
     // Respect both the OS permission AND the user's DB-stored preference.
     if (!("Notification" in window) || Notification.permission !== "granted") return;

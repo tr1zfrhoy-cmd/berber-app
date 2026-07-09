@@ -120,6 +120,17 @@ export default function Auth() {
               سياسة الخصوصية
             </Link>
           </p>
+
+          <div className="mt-4 flex items-center justify-center gap-4 text-[11px] text-zinc-500">
+            <Link to="/app/about" data-testid="auth-about-link"
+              className="hover:text-[#D4AF37] transition">من نحن</Link>
+            <span className="text-zinc-700">·</span>
+            <Link to="/app/contact" data-testid="auth-contact-link"
+              className="hover:text-[#D4AF37] transition">اتصل بنا</Link>
+            <span className="text-zinc-700">·</span>
+            <Link to="/app/help" data-testid="auth-help-link"
+              className="hover:text-[#D4AF37] transition">المساعدة</Link>
+          </div>
         </div>
       </div>
     </div>

@@ -24,6 +24,11 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import Terms from "./pages/Terms";
 import BarberWorks from "./pages/BarberWorks";
 import AdminReports from "./pages/AdminReports";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import Help from "./pages/Help";
+import Onboarding from "./pages/Onboarding";
+import InstallPrompt from "./components/InstallPrompt";
 
 const RoleHome = () => {
   const { user } = useAuth();
@@ -42,6 +47,9 @@ const Protected = () => {
       <Routes>
         <Route path="privacy" element={<PrivacyPolicy />} />
         <Route path="terms" element={<Terms />} />
+        <Route path="about" element={<About />} />
+        <Route path="contact" element={<Contact />} />
+        <Route path="help" element={<Help />} />
         <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     );
@@ -63,6 +71,9 @@ const Protected = () => {
         <Route path="terms" element={<Terms />} />
         <Route path="works" element={<BarberWorks />} />
         <Route path="reports" element={<AdminReports />} />
+        <Route path="about" element={<About />} />
+        <Route path="contact" element={<Contact />} />
+        <Route path="help" element={<Help />} />
       </Routes>
     </Layout>
   );
@@ -75,11 +86,23 @@ const Root = () => {
   if (showSplash) return <Splash onDone={() => setShowSplash(false)} />;
   if (loading) return null;
 
+  // First-run onboarding gate: only for guests who haven't seen the intro yet.
+  let onboarded = true;
+  try { onboarded = localStorage.getItem("berber_onboarded") === "1"; } catch (e) { /* ignore */ }
+
   return (
     <Routes>
-      <Route path="/auth" element={user ? <Navigate to="/app" replace /> : <Auth />} />
+      <Route path="/onboarding" element={
+        onboarded ? <Navigate to={user ? "/app" : "/auth"} replace /> : <Onboarding />
+      } />
+      <Route path="/auth" element={
+        user ? <Navigate to="/app" replace />
+             : (onboarded ? <Auth /> : <Navigate to="/onboarding" replace />)
+      } />
       <Route path="/app/*" element={<Protected />} />
-      <Route path="*" element={<Navigate to={user ? "/app" : "/auth"} replace />} />
+      <Route path="*" element={
+        <Navigate to={user ? "/app" : (onboarded ? "/auth" : "/onboarding")} replace />
+      } />
     </Routes>
   );
 };
@@ -90,6 +113,7 @@ function App() {
       <AuthProvider>
         <BrowserRouter>
           <Root />
+          <InstallPrompt />
           <Toaster position="top-center" richColors theme="dark" toastOptions={{ style: { fontFamily: "Cairo, sans-serif", direction: "rtl" } }} />
         </BrowserRouter>
       </AuthProvider>

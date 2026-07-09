@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { LogOut, User, Phone, Save, MapPin, Edit3, Shield, Image, Plus, Trash2, Camera, FileText, ChevronLeft, KeyRound, Eye, EyeOff } from "lucide-react";
+import { LogOut, User, Phone, Save, MapPin, Edit3, Shield, Image, Plus, Trash2, Camera, FileText, ChevronLeft, KeyRound, Eye, EyeOff, Info, PhoneCall, HelpCircle, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { api } from "../lib/api";
@@ -66,6 +66,26 @@ export default function Settings() {
 
   const supportUrl = supportWhatsappUrl(user);
   const handleSupport = () => openWhatsApp(user);
+
+  const shareApp = async () => {
+    const shareData = {
+      title: "Berber · حلاق دلفري",
+      text: "جرّب Berber — الحلاق الفاخر يجيك لباب بيتك. حمّل التطبيق الآن:",
+      url: window.location.origin,
+    };
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else if (navigator.clipboard) {
+        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
+        toast.success("تم نسخ الرابط! شاركه مع أصحابك");
+      } else {
+        toast.info("انسخ الرابط: " + shareData.url);
+      }
+    } catch (e) {
+      // User cancelled — do nothing
+    }
+  };
 
   return (
     <div className="px-5 pt-6 space-y-5" data-testid="settings-page">
@@ -169,6 +189,34 @@ export default function Settings() {
 
       {/* Legal links */}
       <div className="rounded-2xl bg-[#121212] border border-white/5 divide-y divide-white/5">
+        <button data-testid="link-about" onClick={() => navigate("/app/about")}
+          className="w-full flex items-center justify-between py-3.5 px-4 hover:bg-white/5 transition">
+          <span className="flex items-center gap-3 text-sm font-bold">
+            <Info className="w-4 h-4 text-[#D4AF37]" /> من نحن
+          </span>
+          <ChevronLeft className="w-4 h-4 text-zinc-500" />
+        </button>
+        <button data-testid="link-contact" onClick={() => navigate("/app/contact")}
+          className="w-full flex items-center justify-between py-3.5 px-4 hover:bg-white/5 transition">
+          <span className="flex items-center gap-3 text-sm font-bold">
+            <PhoneCall className="w-4 h-4 text-[#D4AF37]" /> اتصل بنا
+          </span>
+          <ChevronLeft className="w-4 h-4 text-zinc-500" />
+        </button>
+        <button data-testid="link-help" onClick={() => navigate("/app/help")}
+          className="w-full flex items-center justify-between py-3.5 px-4 hover:bg-white/5 transition">
+          <span className="flex items-center gap-3 text-sm font-bold">
+            <HelpCircle className="w-4 h-4 text-[#D4AF37]" /> الأسئلة الشائعة
+          </span>
+          <ChevronLeft className="w-4 h-4 text-zinc-500" />
+        </button>
+        <button data-testid="link-share-app" onClick={shareApp}
+          className="w-full flex items-center justify-between py-3.5 px-4 hover:bg-white/5 transition">
+          <span className="flex items-center gap-3 text-sm font-bold">
+            <Share2 className="w-4 h-4 text-[#D4AF37]" /> شارك التطبيق
+          </span>
+          <ChevronLeft className="w-4 h-4 text-zinc-500" />
+        </button>
         <button data-testid="link-privacy" onClick={() => navigate("/app/privacy")}
           className="w-full flex items-center justify-between py-3.5 px-4 hover:bg-white/5 transition">
           <span className="flex items-center gap-3 text-sm font-bold">
