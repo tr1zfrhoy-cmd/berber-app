@@ -1,0 +1,35 @@
+{
+  "summary": "Verified the offline-session-restore bug fix in Berber PWA. All 8 requested scenarios pass. When the app is launched offline with a previously authenticated session, AuthContext now: (a) reads cached user + token from localStorage without erasing them, (b) skips the /auth/me network call while offline and lands the user directly on their role home under /app, (c) always calls setLoading(false) in finally so the Splash dismisses within ~3s. Offline banner ('لا يوجد اتصال — وضع العرض فقط') renders correctly. Reconnect flow re-hits /auth/me silently and clears the banner. Regression tests (fresh guest online→/auth, fresh guest offline→/onboarding without crash, 401 bad-token real-logout→/auth with token cleared) all pass.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_results": {
+    "T1_customer_online_login": {"status": "PASS", "final_url": "/app", "storage_seeded": {"hd_token": true, "berber_user_cache": true}},
+    "T2_offline_customer_restore": {"status": "PASS", "final_url": "/app", "splash_dismissed_within_4s": true, "offline_banner_visible": true, "hd_token_preserved": true, "berber_user_cache_preserved": true},
+    "T3_reconnect_silent_refresh": {"status": "PASS", "stayed_on_app": true, "banner_disappeared": true, "no_redirect_flicker": true},
+    "T4_admin_offline_restore": {"status": "PASS", "final_url": "/app", "offline_banner_visible": true, "splash_dismissed": true, "admin_dashboard_text_present": true},
+    "T5_fresh_guest_online_regression": {"status": "PASS", "final_url": "/auth"},
+    "T6_fresh_guest_offline_regression": {"status": "PASS", "rendered": "/onboarding (SW-cached)", "no_infinite_splash": true, "body_snippet": "تخطّي / احجز حلاقك المفضل"},
+    "T7_bad_token_401_real_logout": {"status": "PASS", "final_url": "/auth", "hd_token_cleared": true}
+  },
+  "test_report_links": [],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "AuthContext.jsx refresh() is now bulletproof: try/catch/finally with setLoading(false) in finally, offline branch never touches the network or removes the token, only 401/403 clears the session — this correctly separates 'no network' from 'auth revoked'. Solid.",
+    "cacheUser() is invoked on login/register/updateProfile so the cache stays fresh — good coverage.",
+    "api.js axios timeout=15000 prevents the previous infinite-hang scenario during offline network attempts — a necessary companion to the AuthContext fix.",
+    "Minor (out of scope for this fix): child pages like CustomerHome/AdminDashboard fire their own axios GETs on mount and throw uncaught Network Errors when offline. In dev mode this shows a red 'Uncaught runtime errors' overlay from react-dev-utils (does NOT appear in production build), but each page still renders behind it. Consider wrapping page-level fetches in try/catch or a shared useAsync hook so read-only offline mode is fully silent even in dev.",
+    "Consider persisting a lightweight 'last_role' hint alongside the user cache so RoleHome could pre-select the correct dashboard shell even before user hydrates from cache (currently fine because readCachedUser is synchronous, but nice-to-have for future skeleton loading)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "n/a (skipped per request)", "frontend": "100% (16/16 assertions across 7 scenarios)"},
+  "test_credentials": "Customer 07700000001 / Test@1234 (name علي) — registered fresh during this run; Admin 07812059874 / Admin@2026 — works.",
+  "seed_data_creation": "Registered customer 07700000001 / علي on preview DB (was missing).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Offline PWA testing sequence that works reliably: (1) goto BASE with online, wait 5s for Splash to self-dismiss, (2) if url is /onboarding click [data-testid=onboarding-skip], (3) auth form uses testids auth-phone-input / auth-password-input / auth-submit-btn / auth-tab-login / auth-tab-register / role-customer-btn / auth-name-input (NOT login-phone/reg-phone), (4) after landing /app do wait_for_load_state('networkidle') THEN await page.context.set_offline(True) THEN page.reload — this triggers the real fix path. (5) Do NOT clear localStorage between offline sub-tests. React dev overlay 'Uncaught runtime errors' may appear over the app when other pages' axios calls fail offline — it is a dev-only artifact; the actual app content (offline banner, /app URL, cache) is still there and works. Test via data-testids and URL, not visual overlays.",
+  "rca of the issue": "Original bug: on offline boot, refresh() in AuthContext threw an unhandled AxiosError from api.get('/auth/me'), which never resolved because axios had no timeout, so setLoading(false) never fired → infinite splash. Fix: (a) short-circuit refresh() when navigator.onLine===false and hydrate from berber_user_cache, (b) wrap the whole refresh in try/catch/finally with setLoading(false) in finally, (c) distinguish 401/403 (real logout — clear token) from network/5xx (preserve token, fall back to cache), (d) add axios timeout=15000. Verified end-to-end via Playwright."
+}

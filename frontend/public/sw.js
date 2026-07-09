@@ -1,10 +1,10 @@
-// Service Worker for Berber PWA — v30 (offline-ready + friendly Arabic errors)
+// Service Worker for Berber PWA — v31 (offline session restore + friendly errors)
 // Strategy:
 //   * App shell + offline page precached on install
 //   * API traffic: network-only (no caching)
 //   * Navigation: network-first, falls back to offline.html when network fails
 //   * Static assets (JS/CSS/img): stale-while-revalidate
-const CACHE = "berber-v30";
+const CACHE = "berber-v31";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   "/",
