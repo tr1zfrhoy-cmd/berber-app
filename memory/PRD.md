@@ -59,22 +59,33 @@
   - New `reports` collection + `POST /api/reports`, `GET/PATCH /api/admin/reports`
   - Admin Dashboard shows pending count badge + dedicated `/app/reports` page with filters and status actions
   - Each report links back to the barber's user-detail page (uses existing admin delete)
+- [x] **Strategy A: Native-like PWA offline pages** (2026-02, for Uptodown app-store approval):
+  - `/onboarding` — 3-slide first-run intro (Scissors, MapPin, Star); sets `localStorage.berber_onboarded='1'`; App.js gates first-run redirect
+  - `/app/about` — offline About page with Iraqi copy, stats grid, values, CTA to contact
+  - `/app/contact` — offline Contact page with 3 native buttons (WhatsApp intent, `tel:`, `mailto:`) + location + hours
+  - `/app/help` — 10-item accordion FAQ (offline-safe)
+  - Public/guest access to `about`/`contact`/`help` (no login required)
+  - Auth screen footer links: من نحن · اتصل بنا · المساعدة
+  - Settings page: 4 new tiles (About, Contact, Help, Share App)
+  - **Web Share API** button in Settings — `navigator.share()` w/ clipboard fallback
+  - **Vibration API** on barber new booking — `navigator.vibrate([200,100,200,100,400])`
+  - **PWA install banner** (`InstallPrompt.jsx`) via `beforeinstallprompt` event, 7-day dismissal, hidden in standalone
+  - Service Worker bumped to **berber-v28**; APP_SHELL precaches all new routes
+  - Tested via testing_agent iteration_4: 10/10 pass
 
 ## Test Status
 - Backend pytest: **21/21 passing** (iteration 3)
-- Frontend: 100% on all tested iteration-3 flows
+- Frontend: 100% on iteration-4 Strategy A flows
 
 ## Backlog
 ### P1 — Next Phase
+- **Web Push infra** (VAPID keys, `pywebpush`, subscription tracking) for background notifications when app is closed
 - Withdrawal record entity (track payouts) + admin "mark paid" action
-- Push notifications (web push / FCM) for new bookings
-- Ratings & reviews after completion
 - Barber availability/schedule
 - Multiple language toggle (AR/EN)
 
 ### P2
 - In-app payments via Stripe (when keys provided)
-- Photos upload (barber portfolio, before/after) via object storage
 - ETA + live tracking
 - Service add-ons (henna, hair color, etc.)
 
