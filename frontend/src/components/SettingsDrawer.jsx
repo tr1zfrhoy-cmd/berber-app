@@ -7,7 +7,6 @@ import {
 import { toast } from "sonner";
 import { api } from "../lib/api";
 import { openWhatsApp } from "../lib/support";
-import { SUPPORT } from "../lib/api";
 import { errMsg } from "../lib/errors";
 
 /**
@@ -81,8 +80,6 @@ export default function SettingsDrawer({
     } catch (e) { /* user cancelled — ignore */ }
   };
 
-  const supportPhone = (SUPPORT?.phone || "07812059874").replace(/\s+/g, "");
-
   return (
     <>
       {/* Backdrop */}
@@ -130,11 +127,11 @@ export default function SettingsDrawer({
             <button
               data-testid="drawer-pw-toggle"
               onClick={() => setPwOpen((v) => !v)}
-              className="w-full px-4 py-3.5 flex items-center gap-3 hover:bg-white/5 transition"
+              className="w-full px-4 py-3.5 flex items-center gap-3 hover:bg-white/5 transition text-white"
             >
               <KeyRound className="w-4 h-4 text-[#D4AF37]" />
-              <span className="flex-1 text-right text-sm font-bold">تغيير كلمة المرور</span>
-              <ChevronDown className={`w-4 h-4 text-zinc-500 transition-transform ${pwOpen ? "rotate-180 text-[#D4AF37]" : ""}`} />
+              <span className="flex-1 text-right text-sm font-bold text-white">تغيير كلمة المرور</span>
+              <ChevronDown className={`w-4 h-4 text-zinc-400 transition-transform ${pwOpen ? "rotate-180 text-[#D4AF37]" : ""}`} />
             </button>
             {pwOpen && (
               <div className="px-4 pb-4 pt-1 space-y-2 border-t border-white/5">
@@ -177,16 +174,6 @@ export default function SettingsDrawer({
             right={<span className="text-[10px] text-emerald-400 font-bold">فوري</span>}
             onClick={() => { onClose(); openWhatsApp(user); }}
           />
-          <a
-            data-testid="drawer-support-call"
-            href={`tel:${supportPhone}`}
-            onClick={onClose}
-            className="w-full flex items-center gap-3 rounded-2xl bg-[#111] border border-white/5 px-4 py-3.5 hover:bg-white/5 transition"
-          >
-            <PhoneCall className="w-4 h-4 text-[#D4AF37]" />
-            <span className="flex-1 text-right text-sm font-bold">اتصل بالدعم</span>
-            <span className="text-[11px] text-zinc-500 font-mono" dir="ltr">{supportPhone}</span>
-          </a>
 
           {/* Info & legal */}
           <SectionTitle>معلومات</SectionTitle>
@@ -232,10 +219,10 @@ const DrawerRow = ({ testid, icon, label, right, onClick }) => (
   <button
     data-testid={testid}
     onClick={onClick}
-    className="w-full flex items-center gap-3 rounded-2xl bg-[#111] border border-white/5 px-4 py-3.5 hover:bg-white/5 hover:border-[#D4AF37]/20 active:scale-[0.99] transition text-right"
+    className="w-full flex items-center gap-3 rounded-2xl bg-[#111] border border-white/10 px-4 py-3.5 hover:bg-white/5 hover:border-[#D4AF37]/40 active:scale-[0.99] transition text-right text-white"
   >
     {icon}
-    <span className="flex-1 text-sm font-bold">{label}</span>
+    <span className="flex-1 text-sm font-bold text-white">{label}</span>
     {right}
   </button>
 );
