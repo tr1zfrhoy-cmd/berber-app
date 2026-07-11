@@ -1,0 +1,32 @@
+{
+  "summary": "BUG FIX 2 RETEST (SettingsDrawer white-text contrast) — VERIFIED PASSING for both customer and barber. Drawer is now DARK (rgb(10,10,10)), row backgrounds DARK (rgb(17,17,17)), all 8 target label testids compute to pure white rgb(255,255,255), and update-location-btn (barber) is also white. drawer-support-call is absent (BUG FIX 1 still holds). The rest of the app (/app home) remains LIGHT (body rgb(255,255,255)) — scoped [data-testid='settings-drawer'] override does NOT bleed. Screenshots captured for both roles + home light view.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "SettingsDrawer header", "issues": ["Phone number <p> under h2 renders at rgb(136,136,136) which is BELOW the requested >=180 luminance threshold. Visually it is a deliberate dim-grey (text-zinc-500 -> #888888) on dark bg and remains legible; not a real regression, just below the strict spec threshold. Consider bumping to text-zinc-300 (#d4d4d8) if a brighter phone label is desired."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/test_reports/drawer_customer.png",
+    "/app/test_reports/drawer_barber.png",
+    "/app/test_reports/home_light.png"
+  ],
+  "action_items": [
+    "Optional (not blocking): brighten drawer header phone <p> from text-zinc-500 to text-zinc-300 if a stronger contrast is desired. Everything else meets spec.",
+    "Section titles (الدعم/معلومات/القانونية) are rendered as <div> (not <h3>) — visual check in screenshots confirms they display as dim grey on dark, which matches the intended design."
+  ],
+  "critical_code_review_comments": [
+    "The scoped fix in /app/frontend/src/index.css using [data-testid='settings-drawer'] descendant selectors works reliably (specificity beats the global .text-white light override). Good, surgical fix.",
+    "Consider replacing !important-heavy overrides with a proper theme-aware CSS variable so future dark islands (modals, drawers, sheets) don't each need a bespoke scoped block."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend-only test)", "frontend": "100% on requested acceptance criteria (drawer dark + all labels white + rest of app light)"},
+  "test_credentials": "Customer 07700000001/Test@1234, Barber 07700000002/Test@1234 — both verified working via auth-* testids.",
+  "seed_data_creation": "None",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "SettingsDrawer contrast fix confirmed. When testing, set localStorage.setItem('berber_onboarded','1') BEFORE navigating to /app/login, otherwise the Onboarding page intercepts. Use [data-testid='auth-tab-login'], auth-phone-input, auth-password-input, auth-submit-btn to log in. Drawer selectors: settings-drawer-open, settings-drawer, drawer-pw-toggle, settings-support-whatsapp, link-about|contact|help|share-app|privacy|terms, update-location-btn (barber only).",
+  "rca of the issue": "Not applicable — this iteration only verified the previously applied fix. Fix RCA (per main agent): global `.text-white { color:#1a1a1a !important }` in the light-theme override block neutralized JSX text-white utilities on drawer rows (bg-[#111] was not remapped to light, causing dark-on-dark). Resolution: a scoped [data-testid='settings-drawer'] block appended AFTER the light override, using higher-specificity (0,2,0) descendant selectors with !important to restore white labels + dark bg only within the drawer. Verified: drawer rgb(10,10,10), rows rgb(17,17,17), all target labels rgb(255,255,255)."
+}

@@ -215,6 +215,42 @@ input::placeholder, textarea::placeholder { color: #999 !important; }
 /* Hover states on dark were white/5 — make subtle gray on light */
 .hover\:bg-white\/5:hover { background-color: rgba(0,0,0,0.04) !important; }
 
+/* =============================================================
+   SETTINGS DRAWER — stays DARK (luxury sidebar) even in light theme.
+   Scoped exceptions defeat the global !important overrides above.
+   ============================================================= */
+[data-testid="settings-drawer"] {
+  background-color: #0a0a0a !important;
+  color: #ffffff !important;
+  border-right: 1px solid rgba(212,175,55,0.20) !important;
+}
+[data-testid="settings-drawer"] .bg-\[\#111\],
+[data-testid="settings-drawer"] .bg-\[\#0a0a0a\] {
+  background-color: #111111 !important;
+}
+[data-testid="settings-drawer"] .text-white,
+[data-testid="settings-drawer"] button,
+[data-testid="settings-drawer"] span,
+[data-testid="settings-drawer"] input {
+  color: #ffffff !important;
+}
+[data-testid="settings-drawer"] .text-zinc-400 { color: #a1a1a1 !important; }
+[data-testid="settings-drawer"] .text-zinc-500 { color: #888888 !important; }
+[data-testid="settings-drawer"] .text-zinc-600 { color: #6b6b6b !important; }
+[data-testid="settings-drawer"] .placeholder\:text-zinc-500::placeholder { color: #6b6b6b !important; }
+[data-testid="settings-drawer"] .border-white\/5  { border-color: rgba(255,255,255,0.06) !important; }
+[data-testid="settings-drawer"] .border-white\/10 { border-color: rgba(255,255,255,0.10) !important; }
+[data-testid="settings-drawer"] .hover\:bg-white\/5:hover { background-color: rgba(255,255,255,0.05) !important; }
+[data-testid="settings-drawer"] .bg-black\/40,
+[data-testid="settings-drawer"] .bg-black\/50 { background-color: rgba(0,0,0,0.5) !important; }
+/* Preserve gold accent tints inside drawer */
+[data-testid="settings-drawer"] .text-emerald-400 { color: #34d399 !important; }
+[data-testid="settings-drawer"] .text-red-400 { color: #f87171 !important; }
+[data-testid="settings-drawer"] .bg-red-500\/10 { background-color: rgba(239,68,68,0.15) !important; }
+[data-testid="settings-drawer"] .bg-red-500\/10 * { color: #f87171 !important; }
+/* Backdrop stays dark */
+[data-testid="settings-drawer-backdrop"] { background-color: rgba(0,0,0,0.7) !important; }
+
 /* =====================================================================
    Native app polish (TWA / PWA installed mode)
    ===================================================================== */
