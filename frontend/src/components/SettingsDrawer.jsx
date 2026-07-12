@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { api } from "../lib/api";
 import { openWhatsApp } from "../lib/support";
 import { errMsg } from "../lib/errors";
+import { shareNative } from "../lib/native";
 
 /**
  * Slide-in settings drawer (left side for RTL).
@@ -68,16 +69,9 @@ export default function SettingsDrawer({
       text: "جرّب Berber — الحلاق الفاخر يجيك لباب بيتك. حمّل التطبيق الآن:",
       url: window.location.origin,
     };
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else if (navigator.clipboard) {
-        await navigator.clipboard.writeText(`${shareData.text} ${shareData.url}`);
-        toast.success("تم نسخ الرابط! شاركه مع أصحابك");
-      } else {
-        toast.info("انسخ الرابط: " + shareData.url);
-      }
-    } catch (e) { /* user cancelled — ignore */ }
+    const res = await shareNative(shareData);
+    if (res.via === "clipboard") toast.success("تم نسخ الرابط! شاركه مع أصحابك");
+    else if (res.via === "none") toast.info("انسخ الرابط: " + shareData.url);
   };
 
   return (

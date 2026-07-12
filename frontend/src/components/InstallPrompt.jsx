@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Download, X } from "lucide-react";
+import { isNative } from "../lib/native";
 
 /**
  * Smart PWA install prompt.
@@ -13,7 +14,8 @@ export default function InstallPrompt() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Never show inside an already-installed context
+    // Never show inside an already-installed context (PWA standalone OR native shell)
+    if (isNative()) return;
     const isStandalone =
       window.matchMedia?.("(display-mode: standalone)").matches ||
       window.navigator.standalone === true ||

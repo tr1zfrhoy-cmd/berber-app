@@ -7,6 +7,7 @@ import { StatusBadge } from "./CustomerHome";
 import { errMsg, logErr } from "../lib/errors";
 import { supportWhatsappUrl, openWhatsApp } from "../lib/support";
 import Avatar from "../components/Avatar";
+import { vibrateHeavy } from "../lib/native";
 
 // Pleasant 3-tone notification chime via Web Audio API (no asset needed).
 function playChime() {
@@ -75,8 +76,8 @@ export default function BarberDashboard() {
   const fireNotification = async (b) => {
     playChime();
     try { audioRef.current?.play().catch(() => {}); } catch (e) { logErr("audio play failed:", e); }
-    // Native haptic feedback — mimics native app new-order alert
-    try { navigator.vibrate?.([200, 100, 200, 100, 400]); } catch (e) {}
+    // Native haptic feedback (Capacitor when APK, navigator.vibrate on web).
+    vibrateHeavy();
     toast.success(`طلب جديد · ${b.service_name} · ${fmtIQD(b.price)}`, { duration: 6000 });
     // Respect both the OS permission AND the user's DB-stored preference.
     if (!("Notification" in window) || Notification.permission !== "granted") return;

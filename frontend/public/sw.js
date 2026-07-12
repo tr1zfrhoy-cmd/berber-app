@@ -1,10 +1,12 @@
-// Service Worker for Berber PWA — v34 (drawer luxury dark scoped)
+// Service Worker for Berber PWA — v35 (Capacitor native shell + PWA hybrid)
 // Strategy:
 //   * App shell + offline page precached on install
 //   * API traffic: network-only (no caching)
 //   * Navigation: network-first, falls back to offline.html when network fails
 //   * Static assets (JS/CSS/img): stale-while-revalidate
-const CACHE = "berber-v34";
+//   * Silently disabled when the app runs inside a Capacitor native shell
+//     (Capacitor bundles assets locally and does its own routing).
+const CACHE = "berber-v35";
 const OFFLINE_URL = "/offline.html";
 const APP_SHELL = [
   "/",

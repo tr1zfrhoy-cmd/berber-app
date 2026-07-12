@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AvatarUpload, GalleryUpload } from "../components/ImageUpload";
 import Avatar from "../components/Avatar";
 import SettingsDrawer from "../components/SettingsDrawer";
+import { getPosition, vibrateLight } from "../lib/native";
 
 /**
  * Slim, focused Settings page.
@@ -38,12 +39,17 @@ export default function Settings() {
     finally { setBusy(false); }
   };
 
-  const updateLocation = () => {
-    if (!navigator.geolocation) return toast.error("الجهاز لا يدعم الموقع");
-    navigator.geolocation.getCurrentPosition(async (p) => {
-      await updateProfile({ lat: p.coords.latitude, lng: p.coords.longitude });
+  const updateLocation = async () => {
+    try {
+      const pos = await getPosition();
+      await updateProfile({ lat: pos.lat, lng: pos.lng });
+      vibrateLight();
       toast.success("تم تحديث موقعك");
-    }, () => toast.error("لم نتمكن من جلب الموقع"));
+    } catch (e) {
+      if (e?.message === "UNSUPPORTED") return toast.error("الجهاز لا يدعم الموقع");
+      if (e?.message === "PERMISSION_DENIED") return toast.error("رفضت صلاحية الموقع — فعّلها من الإعدادات");
+      toast.error("لم نتمكن من جلب الموقع");
+    }
   };
 
   const doLogout = () => {

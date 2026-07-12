@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
+import { hideNativeSplash, setupStatusBar, wireHardwareBack, isNative } from "./lib/native";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 import Splash from "./components/Splash";
@@ -123,6 +124,16 @@ const Root = () => {
 };
 
 function App() {
+  useEffect(() => {
+    // Native shell polish: kill the OS splash once React is mounted,
+    // set the status bar to the dark identity, and wire Android hardware back.
+    setupStatusBar();
+    hideNativeSplash();
+    if (isNative()) document.body.classList.add("cap-native");
+    const unsub = wireHardwareBack();
+    return () => { try { unsub(); } catch (e) {} };
+  }, []);
+
   return (
     <div className="App">
       <AuthProvider>
