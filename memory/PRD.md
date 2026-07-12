@@ -60,22 +60,29 @@
   - Admin Dashboard shows pending count badge + dedicated `/app/reports` page with filters and status actions
   - Each report links back to the barber's user-detail page (uses existing admin delete)
 - [x] **Strategy A: Native-like PWA offline pages** (2026-02, for Uptodown app-store approval):
-  - `/onboarding` — 3-slide first-run intro (Scissors, MapPin, Star); sets `localStorage.berber_onboarded='1'`; App.js gates first-run redirect
-  - `/app/about` — offline About page with Iraqi copy, stats grid, values, CTA to contact
-  - `/app/contact` — offline Contact page with 3 native buttons (WhatsApp intent, `tel:`, `mailto:`) + location + hours
-  - `/app/help` — 10-item accordion FAQ (offline-safe)
-  - Public/guest access to `about`/`contact`/`help` (no login required)
-  - Auth screen footer links: من نحن · اتصل بنا · المساعدة
-  - Settings page: 4 new tiles (About, Contact, Help, Share App)
-  - **Web Share API** button in Settings — `navigator.share()` w/ clipboard fallback
-  - **Vibration API** on barber new booking — `navigator.vibrate([200,100,200,100,400])`
-  - **PWA install banner** (`InstallPrompt.jsx`) via `beforeinstallprompt` event, 7-day dismissal, hidden in standalone
-  - Service Worker bumped to **berber-v28**; APP_SHELL precaches all new routes
-  - Tested via testing_agent iteration_4: 10/10 pass
+  - `/onboarding` — 3-slide first-run intro; sets `localStorage.berber_onboarded='1'`
+  - `/app/about` — offline About page with Iraqi copy + stats + values + CTA
+  - `/app/contact` — 3 native buttons (WhatsApp, `tel:`, `mailto:`) + location + hours
+  - `/app/help` — 10-item accordion FAQ
+  - Web Share API + Vibration API + PWA install banner
+  - Service Worker berber-v28 → v34 through iterations
+- [x] **Bug: Onboarding Skip infinite loop** (2026-02) — routing gate re-reads localStorage on every render
+- [x] **Bug: English "Network Error"** (2026-02) — errMsg() central fix returns Arabic friendly message on any network error
+- [x] **Bug: Infinite offline splash** (2026-02) — AuthContext refresh() wrapped in try/catch/finally, caches user in `berber_user_cache`, restores session offline in read-only mode, never deletes token on network errors
+- [x] **Settings drawer redesign** (2026-02) — slide-in from left with hamburger; minimal main surface; luxury dark drawer scoped in CSS
+- [x] **Capacitor 6 native shell** (2026-02):
+  - Added `capacitor.config.ts` with `appId=com.berber.app`
+  - 7 native plugins: App, SplashScreen, StatusBar, Haptics, Share, Geolocation, Preferences, Network
+  - `src/lib/native.js` — thin adapter that uses Capacitor when APK, falls back to web APIs
+  - `android/` + `ios/` platforms scaffolded with proper permissions, `<queries>` for WhatsApp intent, Arabic usage descriptions in Info.plist
+  - `/app/BUILD_NATIVE.md` — user-facing guide for building APK/IPA
+  - Service Worker → **berber-v35**
+  - Tested via testing_agent iteration_11: 9/9 pass, zero regressions on web/PWA
 
 ## Test Status
 - Backend pytest: **21/21 passing** (iteration 3)
-- Frontend: 100% on iteration-4 Strategy A flows
+- Frontend: 100% pass across iterations 4-11
+- Native APK/IPA: MUST be validated on user's local build (Capacitor bridge cannot be tested in Emergent preview)
 
 ## Backlog
 ### P1 — Next Phase
